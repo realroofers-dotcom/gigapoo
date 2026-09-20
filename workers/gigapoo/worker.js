@@ -94,7 +94,7 @@
      ?action=stats
    ========================================================================== */
 
-const BUILD = "gigapoo-1a · 2026-09-20 · the engine: sites, offers, location on";
+const BUILD = "gigapoo-1b · 2026-09-20 · the engine: sites, offers, location on; gigapoo.com is a site";
 const LOCATION_STALE_DAYS = 30;
 const DELIVERY = ["text", "voice", "own", "file", "in_person"];
 const WHERE = ["remote", "in_place"];
@@ -271,8 +271,10 @@ async function setup(env) {
     .bind(FEE_DEFAULTS.year_cents, FEE_DEFAULTS.buyer_cents, FEE_DEFAULTS.seller_text_cents,
           FEE_DEFAULTS.seller_voice_cents, FEE_DEFAULTS.seller_own_cents, FEE_DEFAULTS.site_share_bps).run();
 
-  /* the house's own three sites exist from the first request, live, no fee */
-  for (const s of [["wire", "Warrant Wire", "warrantwire.com"], ["k8", "8K10Q", "8k10q.com"], ["nujobi", "Nujobi", "nujobi.com"]]) {
+  /* the house's own sites exist from the first request, live, no fee. gigapoo
+     joined 20 Sep — his call: gigapoo.com itself must look like a real
+     marketplace, so its home page runs the market under its own key */
+  for (const s of [["wire", "Warrant Wire", "warrantwire.com"], ["k8", "8K10Q", "8k10q.com"], ["nujobi", "Nujobi", "nujobi.com"], ["gigapoo", "Gigapoo", "gigapoo.com"]]) {
     await D.prepare(
       `INSERT OR IGNORE INTO gp_sites (key, name, domain, owner_name, owner_email, owner_phone, state, verified)
        VALUES (?,?,?,?,?,?,'live',datetime('now'))`)

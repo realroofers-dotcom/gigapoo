@@ -1,0 +1,555 @@
+<!-- BUILT 2026-09-20 · gigapoo yoursite-1a · YOUR OWN GIG MARKET: the pitch to a site owner, the fee share, and the dummy-level directions, on one page. -->
+<!--
+   HIS BRIEF, 18 Sep 2026: "Gigapoo should clearly state that it is an engine
+   to produce a gig component on anyone's site for fee share."
+   HIS BRIEF, 20 Sep: gigapoo.com itself must LOOK LIKE A REAL MARKETPLACE;
+   the offer to put the market on someone else's site lives in the header,
+   not too prominent; and there is ONE page dedicated to having their own gig
+   site, with the directions — "for a dummy, including opening their cPanel".
+
+   This is that page. It sells to ONE reader: the owner of a website. The fee
+   share is the pitch; the directions at the bottom are the whole install,
+   platform by platform (cPanel first, since that is what most hosts give).
+
+   ⚠ THE NUMBERS ON THIS PAGE — the two flat fees and the site's share — are
+   read from ONE place, the FEES block at the top of the script, so they can
+   never disagree with each other. The engine holds the same numbers; when
+   one moves, both move.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your own gig market — on your site, in two lines | Gigapoo</title>
+<meta name="description" content="Paste two lines and your website has a gig market: verified people offering work, people asking for it, payment and payout handled. Your site keeps a share of every fee. Step-by-step directions for cPanel, WordPress, Wix, Squarespace, Shopify and GitHub.">
+<link rel="canonical" href="https://gigapoo.com/yoursite">
+<meta name="author" content="Mark Nejmeh">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gigapoo">
+<meta property="og:title" content="Your own gig market — on your site, in two lines">
+<meta property="og:description" content="Two lines of code put verified people, wanted work and payment on any website. The site shares in the fees. Directions included, for any platform.">
+<meta property="og:url" content="https://gigapoo.com/yoursite">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#eef3f1; --panel:#ffffff; --panel2:#e2ebe8; --line:#cfdad6; --line2:#dde6e2;
+  --ink:#0b1f2a; --ink2:#3d5460; --ink3:#6f8590;
+  --go:#0f9d8a; --go-deep:#0a6f62; --go-wash:rgba(15,157,138,.10);
+  --fee:#c98a1e; --fee-wash:rgba(232,163,61,.14);
+  --code-bg:#0b1f2a; --code-ink:#dff5f0; --code-hi:#7fe3d2;
+  --disp:Manrope,"Segoe UI",Helvetica,Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ground);color:var(--ink);font:16.5px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--go-deep)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5.4vw,60px);font-weight:800;line-height:1.02}
+h2{font-size:clamp(24px,3vw,34px);font-weight:800;line-height:1.12;margin-bottom:12px}
+h3{font-size:18px;font-weight:700;line-height:1.3}
+p{margin:0 0 12px;color:var(--ink2);max-width:62ch}
+p b,li b{color:var(--ink);font-weight:600}
+.k{display:block;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--go-deep);margin:0 0 10px}
+.k.fee{color:var(--fee)}
+code,.code{font-family:var(--mono)}
+
+/* masthead */
+.top{padding:22px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{font:800 26px var(--disp);letter-spacing:-.03em;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:9px}
+.logo .m{width:30px;height:30px;border-radius:9px;background:var(--go);position:relative;flex:0 0 30px}
+.logo .m::after{content:"";position:absolute;left:8px;top:8px;width:14px;height:14px;border-radius:4px;background:var(--panel)}
+.topnav{display:flex;gap:4px;flex-wrap:wrap}
+.topnav a{font:600 14px var(--body);color:var(--ink2);text-decoration:none;padding:8px 12px;border-radius:8px}
+.topnav a:hover{background:var(--panel2);color:var(--ink)}
+.topnav a.cta{background:var(--ink);color:var(--panel)}
+.topnav a.cta:hover{background:var(--go-deep)}
+
+/* hero */
+.hero{padding:44px 0 36px;display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
+@media(max-width:840px){.hero{grid-template-columns:1fr;gap:26px;padding-top:26px}}
+.hero h1 em{font-style:normal;color:var(--go)}
+.hero .sub{font-size:19px;max-width:48ch;margin:16px 0 22px}
+.hero .btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;font:700 15px var(--body);text-decoration:none;padding:13px 20px;border-radius:10px;border:2px solid transparent}
+.btn.go{background:var(--go);color:#fff}
+.btn.go:hover{background:var(--go-deep)}
+.btn.ghost{border-color:var(--line);color:var(--ink);background:var(--panel)}
+.btn.ghost:hover{border-color:var(--ink2)}
+/* the one line */
+.install{background:var(--code-bg);color:var(--code-ink);border-radius:14px;padding:18px 20px 16px;box-shadow:0 18px 40px rgba(11,31,42,.18)}
+.install .k{color:var(--code-hi);margin-bottom:12px}
+.install pre{margin:0;font:500 14px/1.55 var(--mono);white-space:pre-wrap;word-break:break-all}
+.install .hi{color:var(--code-hi)}
+.install .dim{color:#8fb3ac}
+.install .then{margin:14px 0 0;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);font-size:13.5px;color:#b9d6cf}
+.install .then b{color:#fff;font-weight:600}
+
+/* the sentence — what it is, said plainly */
+.what{padding:30px 0;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media(max-width:760px){.what{grid-template-columns:1fr}}
+.what div{font-size:15.5px}
+.what b{display:block;font:800 20px var(--disp);letter-spacing:-.02em;color:var(--ink);margin-bottom:6px}
+.what span{color:var(--ink2)}
+
+/* sections */
+section{padding:44px 0}
+.lede{font-size:18px;max-width:58ch;margin-bottom:22px}
+
+/* how it works — a true sequence */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s}
+@media(max-width:760px){.steps{grid-template-columns:1fr}}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;counter-increment:s;position:relative}
+.step::before{content:counter(s);display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--go);color:#fff;font:800 15px var(--disp);margin-bottom:14px}
+.step h3{margin-bottom:6px}
+.step p{font-size:15px;margin:0}
+
+/* what the site gets */
+.gets{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:700px){.gets{grid-template-columns:1fr}}
+.get{display:grid;grid-template-columns:44px 1fr;gap:14px;padding:18px 18px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.get .ic{width:44px;height:44px;border-radius:11px;background:var(--go-wash);display:flex;align-items:center;justify-content:center}
+.get .ic svg{width:24px;height:24px;stroke:var(--go-deep);fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.get h3{margin-bottom:4px}
+.get p{font-size:14.5px;margin:0}
+
+/* the fee share */
+.fees{background:var(--panel);border:2px solid var(--fee);border-radius:16px;padding:26px 28px;display:grid;grid-template-columns:1.1fr .9fr;gap:26px;align-items:start}
+@media(max-width:800px){.fees{grid-template-columns:1fr}}
+.fees h2{margin-bottom:8px}
+.fees .big{font:800 clamp(38px,6vw,64px)/1 var(--disp);letter-spacing:-.03em;color:var(--ink);margin:6px 0 4px}
+.fees .big small{font:600 16px var(--body);color:var(--ink2);letter-spacing:0;margin-left:8px}
+.ftable{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.ftable th{text-align:left;font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding:8px 10px;border-bottom:1px solid var(--line)}
+.ftable td{padding:10px 10px;border-bottom:1px solid var(--line2);color:var(--ink2)}
+.ftable td.n{text-align:right;font-family:var(--mono);color:var(--ink);white-space:nowrap}
+.ftable tr.you td{background:var(--fee-wash);color:var(--ink);font-weight:600}
+.ftable tr.you td.n{color:var(--fee)}
+.fine{font-size:13.5px;color:var(--ink3);margin:10px 0 0}
+
+/* the rules — short, and they are the product */
+.rules{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:700px){.rules{grid-template-columns:1fr}}
+.rule{padding:16px 18px;border-left:3px solid var(--go);background:var(--panel);border-radius:0 12px 12px 0}
+.rule b{display:block;font:700 16px var(--disp);color:var(--ink);margin-bottom:4px}
+.rule span{font-size:14.5px;color:var(--ink2)}
+
+/* the API */
+.api{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.api{grid-template-columns:1fr}}
+.endpoints{background:var(--code-bg);color:var(--code-ink);border-radius:14px;padding:18px 20px;font:13.5px/1.7 var(--mono)}
+.endpoints .g{color:#8fb3ac;display:block;margin:10px 0 2px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.endpoints .g:first-child{margin-top:0}
+.endpoints .hi{color:var(--code-hi)}
+.endpoints .m{color:#fff}
+
+/* who is on it */
+.sites{display:flex;flex-wrap:wrap;gap:10px}
+.site{display:inline-flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--ink);font:600 14.5px var(--body)}
+.site i{width:10px;height:10px;border-radius:50%;background:var(--go);flex:0 0 10px}
+.site small{font-weight:400;color:var(--ink3)}
+
+/* sign up */
+.signup{background:var(--ink);color:#fff;border-radius:18px;padding:32px 30px;display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:center}
+@media(max-width:800px){.signup{grid-template-columns:1fr;padding:26px 22px}}
+.signup h2{color:#fff}
+.signup p{color:#c6d5d0}
+.signup form{display:grid;gap:9px}
+.signup label{font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#8fb3ac}
+.signup input{width:100%;font:15px var(--body);padding:12px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff}
+.signup input::placeholder{color:#7f9a94}
+.signup input:focus{outline:2px solid var(--code-hi);outline-offset:1px}
+.signup button{font:700 15px var(--body);background:var(--go);color:#fff;border:0;padding:13px 20px;border-radius:10px;cursor:pointer;margin-top:4px}
+.signup button:hover{background:var(--code-hi);color:var(--ink)}
+.signup button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.signup .msg{font-size:14px;color:#c6d5d0;min-height:1.4em;margin:6px 0 0}
+.signup .msg.ok{color:var(--code-hi)}
+.signup .msg.err{color:#ffb4a8}
+
+/* the directions — numbered, one card per click, for somebody who has never edited a page */
+.dir{list-style:none;margin:0;padding:0;counter-reset:d;display:grid;gap:10px}
+.dir li{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px 14px 60px;position:relative;counter-increment:d;font-size:15px;color:var(--ink2)}
+.dir li::before{content:counter(d);position:absolute;left:14px;top:12px;width:32px;height:32px;border-radius:50%;background:var(--go);color:#fff;font:800 15px var(--disp);display:flex;align-items:center;justify-content:center}
+.dir li b{display:block;font:700 16px var(--disp);color:var(--ink);margin:0 0 3px}
+.dir li p{margin:0;font-size:15px}.dir li p+p{margin-top:6px}
+.dir code,.look code,.plat code{font:13.5px var(--mono);background:var(--panel2);padding:1px 6px;border-radius:5px;color:var(--ink)}
+kbd{font:600 12.5px var(--mono);background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--ink)}
+.look{background:var(--fee-wash);border:1px solid #efd9a8;border-radius:10px;padding:10px 14px;font-size:14px;color:#5a4300;margin:10px 0 0}
+.look b{color:var(--ink)}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.pick a{font:600 14px var(--body);color:var(--ink);text-decoration:none;background:var(--panel);border:2px solid var(--line);border-radius:999px;padding:8px 14px}
+.pick a:hover{border-color:var(--go)}
+.plat{margin:0 0 28px}
+.plat h3{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.plat h3 span{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);background:var(--panel2);border-radius:999px;padding:3px 9px}
+.two{background:var(--code-bg);color:var(--code-ink);border-radius:14px;padding:18px 20px 16px;margin:14px 0 0}
+.two .k{color:var(--code-hi);margin-bottom:10px}
+.two pre{margin:0;font:500 14.5px/1.6 var(--mono);white-space:pre-wrap;word-break:break-all}
+.two .hi{color:var(--code-hi)}.two .m{color:#fff}
+.two .cp{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding-top:10px;border-top:1px solid rgba(255,255,255,.12);font-size:13.5px;color:#b9d6cf}
+.two button{font:700 13px var(--body);background:var(--go);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+.two button:hover{background:var(--code-hi);color:var(--ink)}
+.faq{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:700px){.faq{grid-template-columns:1fr}}
+.faq div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.faq b{display:block;font:700 15.5px var(--disp);color:var(--ink);margin:0 0 4px}
+.faq p{margin:0;font-size:14.5px}
+
+footer{padding:30px 0 44px;font-size:13.5px;color:var(--ink3);border-top:1px solid var(--line2);margin-top:20px}
+footer a{color:var(--ink2)}
+footer .stamp{font:400 11px var(--mono);margin-top:14px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--go);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header class="top">
+  <a class="logo" href="/"><span class="m" aria-hidden="true"></span>Gigapoo</a>
+  <nav class="topnav" aria-label="Site">
+    <a href="/">&larr; The market</a>
+    <a href="#how">How it works</a>
+    <a href="#fees">The fee share</a>
+    <a href="#install">Put it on your page</a>
+    <a class="cta" href="#signup">Get a key</a>
+  </nav>
+</header>
+
+<!-- ═══ HERO — the thesis, and the two lines ═══ -->
+<section class="hero">
+  <div>
+    <span class="k">Your own gig market</span>
+    <h1>Put a gig market on <em>your</em> site. Two lines. You share in the fees.</h1>
+    <p class="sub">The market you see on <a href="/">gigapoo.com</a> runs on an engine, and the engine will run on your site too. Paste two lines and your website has verified people offering work, people asking for it, payment and payout — all handled. You bring the people. Every sale on your pages pays a flat fee, and <b>your site keeps a share of it, paid every quarter.</b></p>
+    <div class="btns">
+      <a class="btn go" href="#signup">Get a site key &rarr;</a>
+      <a class="btn ghost" href="#install">The directions, step by step</a>
+    </div>
+  </div>
+  <div class="install">
+    <span class="k">The whole install</span>
+<pre><span class="dim">&lt;!-- anywhere on the page --&gt;</span>
+<span class="hi">&lt;script</span> src=<span class="m">"https://gigapoo.com/gigs.js"</span>
+        data-site=<span class="m">"your-key"</span><span class="hi">&gt;&lt;/script&gt;</span>
+<span class="hi">&lt;div</span> id=<span class="m">"gigs"</span><span class="hi">&gt;&lt;/div&gt;</span></pre>
+    <p class="then"><b>Then:</b> the market draws itself into that div, in your site&rsquo;s colours, on your domain. Wanted and Offered, the seller&rsquo;s page, the request, the bid, the checkout. <a href="#install" style="color:var(--code-hi)">No programmer needed &mdash; the directions are below.</a></p>
+  </div>
+</section>
+
+<div class="what">
+  <div><b>It is an engine.</b><span>Gigapoo runs the market on gigapoo.com, and the same engine runs yours &mdash; on your pages, under your name.</span></div>
+  <div><b>Your people, verified once.</b><span>Each site brings its own sellers and buyers. The engine verifies them &mdash; and a person verified on one site is verified on every site, so the ones you recruit who are already on the engine can sell the same day.</span></div>
+  <div><b>A yearly fee, and a share of every sale.</b><span>One flat yearly fee to run the engine on your site. Then a flat fee on each sale, split between the engine and the site it happened on, paid to you each quarter.</span></div>
+</div>
+
+<!-- ═══ HOW IT WORKS — a real sequence ═══ -->
+<section id="how">
+  <span class="k">How it works</span>
+  <h2>Three steps, and the first two take an afternoon.</h2>
+  <div class="steps">
+    <div class="step"><h3>Register your site</h3><p>Your name, a real telephone, the domain. We call you &mdash; nobody on the engine is anonymous, and that includes the site owners. You get a key.</p></div>
+    <div class="step"><h3>Paste the two lines</h3><p>One script tag and one div. The market renders in your page&rsquo;s own fonts and colours. Nothing to host, nothing to build, no database of yours. <a href="#install">Click-by-click directions</a> for cPanel, WordPress, Wix, Squarespace, Shopify and GitHub.</p></div>
+    <div class="step"><h3>Bring your people</h3><p>Your sellers enrol through the widget on your site and the engine verifies them; your visitors post what they need. When a sale happens the fee is split, and your share is paid to you at the end of each quarter.</p></div>
+  </div>
+</section>
+
+<!-- ═══ WHAT THE SITE GETS ═══ -->
+<section>
+  <span class="k">What your site gets</span>
+  <h2>Everything a gig market needs, and the parts Craigslist never had.</h2>
+  <div class="gets">
+    <div class="get"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 6h8v12H3zM13 6h8v12h-8z"/><path d="M6 10h2M6 13h2M16 10h2M16 13h2"/></svg></div><div><h3>Wanted and Offered, side by side</h3><p>People looking for help and people offering it, on one page. A visitor can post what they need or answer someone who needs them.</p></div></div>
+    <div class="get"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/><path d="M16 3l2 2 3-3"/></svg></div><div><h3>Nobody anonymous</h3><p>Every seller: full name, telephone, a photo, a phone call before they can sell. Every buyer of in-place work: the same. Real names on everything.</p></div></div>
+    <div class="get"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div><div><h3>Remote or in-place, told apart</h3><p>Work done over the wire needs a verified seller. Work done at an address needs both sides verified, the address confirmed, the money held until done, and a meeting record both can see.</p></div></div>
+    <div class="get"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"/><path d="M4 11h16"/><path d="M8 15h3"/></svg></div><div><h3>Payment and payout handled</h3><p>The buyer pays the engine. The engine holds it, pays the seller after the buyer&rsquo;s two-day window, and pays your site its share. Money never touches your site.</p></div></div>
+    <div class="get"><div class="ic"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><div><h3>A public record</h3><p>Every piece of work is dated, every seller carries their ratings with them. A seller you recruit who has sold elsewhere on the engine arrives with a record &mdash; and provably so.</p></div></div>
+    <div class="get"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H4z"/><path d="M9 20h6M12 16v4"/><path d="M8 9h8M8 12h5"/></svg></div><div><h3>Your look, your domain</h3><p>The widget reads your page&rsquo;s CSS. Your visitors never leave your site and never see our name unless you want them to.</p></div></div>
+  </div>
+</section>
+
+<!-- ═══ THE FEE SHARE ═══ -->
+<section id="fees">
+  <div class="fees">
+    <div>
+      <span class="k fee">The fee share</span>
+      <h2>One yearly fee. Flat fees on every sale. Your site keeps a share of them.</h2>
+      <p><b><span id="fee-year">$1,200</span> a year</b> to run the engine on your site &mdash; the verification calls, the payments, the payouts, the record. Then, on every sale, a flat amount from each side: never a percentage of the seller&rsquo;s price, so the better a seller is paid, the less the fee costs them. The site where the sale happened keeps a share of the total.</p>
+      <div class="big"><span id="share-pct">50%</span><small>of every sale&rsquo;s fees, to your site</small></div>
+      <p class="fine">Your share is paid at the end of each quarter by bank transfer. The engine keeps the rest and pays the sellers.</p>
+    </div>
+    <div>
+      <table class="ftable" aria-label="How a sale is split">
+        <thead><tr><th>On one sale</th><th class="n">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>The seller&rsquo;s price &mdash; set by the seller, paid in full to the seller</td><td class="n">their price</td></tr>
+          <tr><td>Flat fee, from the buyer</td><td class="n" id="fee-buyer">$10</td></tr>
+          <tr><td>Flat fee, from the seller</td><td class="n" id="fee-seller">$25</td></tr>
+          <tr><td>Total fee on the sale</td><td class="n" id="fee-total">$35</td></tr>
+          <tr class="you"><td>Your site&rsquo;s share</td><td class="n" id="fee-site">$17.50</td></tr>
+          <tr><td>The engine&rsquo;s share &mdash; the card, the verification call, the payout, the record</td><td class="n" id="fee-engine">$17.50</td></tr>
+        </tbody>
+      </table>
+      <p class="fine">Some kinds of work carry a larger flat seller fee (a spoken recording, a licensed professional&rsquo;s opinion); the split is the same.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ THE RULES ═══ -->
+<section>
+  <span class="k">The rules every site inherits</span>
+  <h2>Short, and they are the product.</h2>
+  <div class="rules">
+    <div class="rule"><b>Nobody is anonymous.</b><span>Sellers, in-place buyers, and site owners: real name, real telephone, a call. Enforced in the engine, not written on a page.</span></div>
+    <div class="rule"><b>Sellers say what they can do.</b><span>The tasks come from the people, in their own words, at their price. The engine does not hand out a list of categories &mdash; it groups what people offer.</span></div>
+    <div class="rule"><b>Any task, except illegal or dangerous.</b><span>A short published refusal list. Everything else is allowed. Flags are reviewed; posts are not pre-screened.</span></div>
+    <div class="rule"><b>Opinion is not advice.</b><span>Work is labelled as a named person&rsquo;s opinion unless the seller holds a licence on file &mdash; then, and only then, may it be marked advice.</span></div>
+    <div class="rule"><b>Nothing is deleted.</b><span>Work, ratings and disputes are dated and kept. A revision gets a new date under the old one. The record is the asset.</span></div>
+    <div class="rule"><b>Money never touches the site.</b><span>The engine takes payment, holds it, pays the seller, pays the site its share each quarter. A site owner never handles a buyer&rsquo;s card or a seller&rsquo;s bank.</span></div>
+    <div class="rule"><b>Each site brings its own people.</b><span>The engine verifies; it does not recruit. Your market is as big as the sellers and buyers you bring to it &mdash; and it is yours.</span></div>
+  </div>
+</section>
+
+<!-- ═══ THE API ═══ -->
+<section id="api">
+  <div class="api">
+    <div>
+      <span class="k">The API</span>
+      <h2>The widget is one client of it. Build your own.</h2>
+      <p>Everything the widget does, it does through the same endpoints your own code can call &mdash; a native app, a page you designed yourself, a back office. Public reads need no key. A seller acts with the token issued at verification. A site acts with its key. JSON in, JSON out.</p>
+      <p class="fine">The full reference, with every field, is published with the engine at <code>gigapoo.com/api</code>.</p>
+    </div>
+    <div class="endpoints">
+      <span class="g">Public &mdash; no key</span>
+      <span class="hi">GET</span> ?sellers=1&amp;site=<span class="m">key</span> &nbsp;<span class="dim">the verified roster on a site</span><br>
+      <span class="hi">GET</span> ?listings=1&amp;site=<span class="m">key</span> &nbsp;<span class="dim">what is offered</span><br>
+      <span class="hi">GET</span> ?requests=1&amp;site=<span class="m">key</span> &nbsp;<span class="dim">what is wanted</span><br>
+      <span class="hi">GET</span> ?seller=<span class="m">id</span> &nbsp;<span class="dim">one profile, ratings, dated work</span><br>
+      <span class="g">Seller &mdash; by token</span>
+      <span class="hi">POST</span> action=offer &nbsp;<span class="dim">what I can do, price, remote or in-place</span><br>
+      <span class="hi">POST</span> action=bid &nbsp;<span class="dim">answer a request</span><br>
+      <span class="hi">GET</span> action=me &nbsp;<span class="dim">my work, my money</span><br>
+      <span class="g">Site &mdash; by key</span>
+      <span class="hi">POST</span> action=request &nbsp;<span class="dim">a visitor asks for work</span><br>
+      <span class="hi">POST</span> action=checkout &nbsp;<span class="dim">start a sale; the engine takes payment</span><br>
+      <span class="hi">GET</span> action=ledger &nbsp;<span class="dim">your site&rsquo;s sales and share</span><br>
+      <span class="hi">POST</span> action=hide&amp;seller=<span class="m">id</span> &nbsp;<span class="dim">keep someone off your site</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WHO RUNS IT ═══ -->
+<section id="sites">
+  <span class="k">Who runs on it</span>
+  <h2>The first four sites are ours. Yours is next.</h2>
+  <div class="sites">
+    <a class="site" href="/"><i></i>Gigapoo <small>&mdash; the open market, any task</small></a>
+    <a class="site" href="https://nujobi.com"><i></i>Nujobi <small>&mdash; journalism and reading, sold by named people</small></a>
+    <a class="site" href="https://warrantwire.com/market"><i></i>Warrant Wire <small>&mdash; verdicts on warrant filings</small></a>
+    <a class="site" href="https://8k10q.com/market"><i></i>8K10Q <small>&mdash; SEC filings read in plain English</small></a>
+  </div>
+  <p class="fine" style="margin-top:14px">The engine was built for these first. Every rule above came from running them.</p>
+</section>
+
+<!-- ═══ THE DIRECTIONS — for a dummy, cPanel included ═══ -->
+<section id="install">
+  <span class="k">Put it on your page</span>
+  <h2>The directions. Ten minutes, no programmer.</h2>
+  <p class="lede">You are going to open the page on your website where you want the market to appear, paste two lines into it, and save. That is the whole job. Here it is click by click, whatever your website is built with.</p>
+
+  <h3>First, get your key</h3>
+  <ol class="dir" style="margin-bottom:26px">
+    <li><b>Fill in the short form at the <a href="#signup">bottom of this page</a>.</b><p>Your name, email, telephone, and your website&rsquo;s address. Nothing else.</p></li>
+    <li><b>We telephone you.</b><p>Every site owner gets a call before a key is issued &mdash; the same rule as for sellers. It takes a few minutes and usually happens the same day.</p></li>
+    <li><b>Your key arrives by email.</b><p>It looks like <code>yoursite-com-4f9a2c1e</code>. It is not a password; it just tells the market which site it is on. Keep the email &mdash; you will paste the key in a moment.</p></li>
+  </ol>
+
+  <h3>Second, copy the two lines</h3>
+  <div class="two">
+    <span class="k">Put your key where it says YOUR-KEY</span>
+<pre><span class="hi">&lt;script</span> src=<span class="m">"https://gigapoo.com/gigs.js"</span> data-site=<span class="m">"YOUR-KEY"</span><span class="hi">&gt;&lt;/script&gt;</span>
+<span class="hi">&lt;div</span> id=<span class="m">"gigs"</span><span class="hi">&gt;&lt;/div&gt;</span></pre>
+    <div class="cp"><span>The first line fetches the market. The second says where on the page to draw it. They go together, in that order.</span><button type="button" id="copy">Copy the two lines</button></div>
+  </div>
+  <div class="look" style="margin-bottom:26px"><b>Where do they go?</b> Wherever you want the market to appear &mdash; under a heading, at the bottom, on its own page called &ldquo;Market&rdquo;. If in doubt, put them right before the line that says <code>&lt;/body&gt;</code>: that is the bottom of the page and it always works.</div>
+
+  <h3>Third, open your page and paste</h3>
+  <p>Not sure what your website is built with? Log in wherever you normally go to change it. If that place has a <b>File Manager</b>, you are on cPanel. If it has <b>Posts</b> and <b>Pages</b> down the left, it is WordPress. If you drag things around on a canvas, it is Wix or Squarespace.</p>
+  <div class="pick">
+    <a href="#cpanel">cPanel (most web hosts)</a><a href="#wordpress">WordPress</a><a href="#wix">Wix</a><a href="#squarespace">Squarespace</a><a href="#shopify">Shopify</a><a href="#github">GitHub / Cloudflare Pages / Netlify</a><a href="#google">Google Sites</a>
+  </div>
+
+  <div class="plat" id="cpanel">
+    <h3>cPanel <span>GoDaddy, Bluehost, HostGator, SiteGround, Namecheap and most others</span></h3>
+    <ol class="dir">
+      <li><b>Log in to your hosting account and open cPanel.</b><p>On GoDaddy it is under <i>My Products &rarr; Web Hosting &rarr; Manage</i>; on most hosts it is a button that says cPanel. It opens a page full of icons.</p></li>
+      <li><b>Click the icon called <code>File Manager</code>.</b><p>It is in the &ldquo;Files&rdquo; section, usually near the top. A window opens that looks like the folders on your computer.</p></li>
+      <li><b>Double-click the folder called <code>public_html</code>.</b><p>That folder is your website. Everything the world sees is in here.</p></li>
+      <li><b>Find the page you want the market on.</b><p>Your home page is <code>index.html</code> (or <code>index.php</code>). A page called &ldquo;About&rdquo; is usually <code>about.html</code>. If your pages are in a folder, open the folder.</p><p class="look"><b>See <code>wp-admin</code>, <code>wp-content</code>, <code>wp-includes</code> in here?</b> Then your site is WordPress &mdash; close this and follow the <a href="#wordpress">WordPress steps</a> instead; they are easier.</p></li>
+      <li><b>Right-click the page &rarr; <code>Edit</code>.</b><p>A box may pop up about character encoding &mdash; just click <b>Edit</b> again. The page opens as text.</p></li>
+      <li><b>Find the spot.</b><p>Press <kbd>Ctrl</kbd>+<kbd>F</kbd> (Mac: <kbd>&#8984;</kbd>+<kbd>F</kbd>), type <code>&lt;/body&gt;</code>, and you will be taken to the bottom of the page. Click on the empty line just above <code>&lt;/body&gt;</code>. (Or click wherever on the page you want the market to appear.)</p></li>
+      <li><b>Paste the two lines</b><p><kbd>Ctrl</kbd>+<kbd>V</kbd>, with your key in place of YOUR-KEY.</p></li>
+      <li><b>Click <code>Save Changes</code></b><p>Top right. Then <b>Close</b>.</p></li>
+      <li><b>Open your website in a new tab and reload it.</b><p>The market is on the page. If you see the old page, hold <kbd>Shift</kbd> and click reload &mdash; your browser was showing you the old copy.</p></li>
+    </ol>
+  </div>
+
+  <div class="plat" id="wordpress">
+    <h3>WordPress <span>the block editor, or Elementor / Divi / any builder</span></h3>
+    <ol class="dir">
+      <li><b>Log in</b><p>At <code>yoursite.com/wp-admin</code>.</p></li>
+      <li><b>Open the page you want the market on.</b><p><i>Pages &rarr; All Pages &rarr;</i> click its name. Or <i>Pages &rarr; Add New</i> and call it &ldquo;Market&rdquo;.</p></li>
+      <li><b>Add a block where you want the market.</b><p>Click the <b>+</b>, type <code>custom html</code>, and choose <b>Custom HTML</b>. (In Elementor or Divi, drag in the <b>HTML</b> / <b>Code</b> widget instead.)</p></li>
+      <li><b>Paste the two lines</b><p>Into the box, with your key in place of YOUR-KEY.</p></li>
+      <li><b>Click <code>Update</code></b><p>(or <b>Publish</b>) at the top right.</p></li>
+      <li><b>Click <code>View page</code>.</b><p>The market is there. If WordPress stripped the lines (some plans do), install the free plugin &ldquo;WPCode&rdquo; and paste them into a snippet set to <i>Site-wide footer</i> instead.</p></li>
+    </ol>
+  </div>
+
+  <div class="plat" id="wix">
+    <h3>Wix</h3>
+    <ol class="dir">
+      <li><b>Open the editor</b><p>For your site, and go to the page you want.</p></li>
+      <li><b>Click <code>Add Elements</code> (the +) &rarr; <code>Embed Code</code> &rarr; <code>Embed HTML</code>.</b><p>A box lands on the page.</p></li>
+      <li><b>Click the box &rarr; <code>Enter Code</code></b><p>Paste the two lines with your key, click <b>Update</b>.</p></li>
+      <li><b>Drag the box where you want it and make it tall</b><p>The market needs room. Then <b>Publish</b>.</p></li>
+    </ol>
+  </div>
+
+  <div class="plat" id="squarespace">
+    <h3>Squarespace</h3>
+    <ol class="dir">
+      <li><b>Edit the page</b><p>Click an insert point (the blue line), and choose <b>Code</b>.</p></li>
+      <li><b>Paste the two lines with your key.</b><p>Leave the type as HTML. Click outside the box.</p></li>
+      <li><b>Save.</b><p>The market is on the page. (Code blocks need the Business plan or above.)</p></li>
+    </ol>
+  </div>
+
+  <div class="plat" id="shopify">
+    <h3>Shopify</h3>
+    <ol class="dir">
+      <li><b>Online Store &rarr; Pages &rarr; Add page</b><p>Call it &ldquo;Market&rdquo;, or open an existing page.</p></li>
+      <li><b>In the content box click the <code>&lt;&gt;</code> button</b><p>(Show HTML), paste the two lines with your key, click <code>&lt;&gt;</code> again.</p></li>
+      <li><b>Save.</b><p>Add the page to your menu under <i>Navigation</i> so people can find it.</p></li>
+    </ol>
+  </div>
+
+  <div class="plat" id="github">
+    <h3>GitHub <span>a site that deploys from a repository &mdash; Cloudflare Pages, Netlify, Vercel, GitHub Pages</span></h3>
+    <ol class="dir">
+      <li><b>Open your repository on github.com</b><p>Click the page file &mdash; <code>index.html</code>, or whichever page you want the market on.</p></li>
+      <li><b>Click the pencil</b><p>Top right of the file: &ldquo;Edit this file&rdquo;.</p></li>
+      <li><b>Find <code>&lt;/body&gt;</code> near the bottom</b><p><kbd>Ctrl</kbd>+<kbd>F</kbd>. Put the cursor on the line above it and paste the two lines with your key.</p></li>
+      <li><b>Click <code>Commit changes</code></b><p>Green button, top right; then <b>Commit changes</b> again in the box that appears. You can leave the message as it is.</p></li>
+      <li><b>Wait a minute.</b><p>Your host rebuilds the site from the repository on its own &mdash; Cloudflare Pages, Netlify and Vercel all do. Then open your site and reload.</p></li>
+    </ol>
+  </div>
+
+  <div class="plat" id="google">
+    <h3>Google Sites</h3>
+    <ol class="dir">
+      <li><b>Edit the site</b><p>In the right panel choose <b>Embed</b> &rarr; <b>Embed code</b>.</p></li>
+      <li><b>Paste the two lines with your key</b><p>Click <b>Next</b>, then <b>Insert</b>. Stretch the box tall.</p></li>
+      <li><b>Publish.</b></li>
+    </ol>
+  </div>
+
+  <h3>What you should see</h3>
+  <p>A light-blue panel with a yellow shield: <b>&ldquo;Real people, real names.&rdquo;</b> Under it, four buttons &mdash; <b>Offered</b>, <b>Wanted</b>, <b>I need someone</b>, <b>Sell here</b>. On a brand-new site the first two say nobody has posted yet; that is right &mdash; you bring the people. It looks exactly like <a href="/">the market on gigapoo.com</a>, in your colours.</p>
+
+  <h3 style="margin-top:22px">If something is off</h3>
+  <div class="faq">
+    <div><b>Nothing appears.</b><p>Nine times in ten the second line is missing or the two lines got separated. Both lines, first line first. Then hold <kbd>Shift</kbd> and reload.</p></div>
+    <div><b>It shows nothing when people try to post.</b><p>The key is mistyped, or a space crept in. Copy it again from the email &mdash; no spaces, quotes exactly as in the two lines.</p></div>
+    <div><b>The page shows the two lines as text instead of the market.</b><p>You pasted into a normal text box, not an HTML/code box. Every platform above has a code box; use that one.</p></div>
+    <div><b>It appears, but squeezed into a narrow strip.</b><p>The box you put it in has a fixed height (Wix and Google Sites do this). Drag the box taller, or set its height to &ldquo;auto&rdquo;.</p></div>
+  </div>
+  <p class="fine" style="margin-top:14px">Still stuck? Email <a href="mailto:realroofers@gmail.com">realroofers@gmail.com</a> with your website&rsquo;s address and the platform. A person answers, and if it is easier, we do it with you on the telephone.</p>
+</section>
+
+<!-- ═══ SIGN UP ═══ -->
+<section id="signup">
+  <div class="signup">
+    <div>
+      <span class="k" style="color:#8fb3ac">Get a site key</span>
+      <h2>Tell us who you are and where the market goes.</h2>
+      <p>We telephone every site owner before a key is issued &mdash; the same rule as for sellers. You will hear from a person, usually within a day.</p>
+    </div>
+    <form id="f" novalidate>
+      <label for="s-name">Your name</label>
+      <input id="s-name" name="name" type="text" autocomplete="name" placeholder="First and last" required>
+      <label for="s-email">Email</label>
+      <input id="s-email" name="email" type="email" autocomplete="email" placeholder="you@yoursite.com" required>
+      <label for="s-phone">Telephone</label>
+      <input id="s-phone" name="phone" type="tel" autocomplete="tel" placeholder="A number we can call" required>
+      <label for="s-site">The website</label>
+      <input id="s-site" name="site" type="url" autocomplete="url" placeholder="https://yoursite.com" required>
+      <button type="submit" id="s-go">Request a key</button>
+      <p class="msg" id="s-msg"></p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  Gigapoo runs the market at gigapoo.com, and the same engine powers the markets on the sites that install it. A seller&rsquo;s work is that seller&rsquo;s opinion, published under their name, and is not advice unless marked so by a licensed professional on file. Nothing here alleges that anyone broke any law.<br>
+  Built and run by <a href="https://warrantwire.com/about">Mark Nejmeh</a> &middot; <a href="/">The market</a> &middot; <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/api">API</a>
+  <p class="stamp">Built 2026-09-20 &middot; gigapoo yoursite-1a</p>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  /* ⚠ THE NUMBERS, IN ONE PLACE. The engine holds the same three; when they
+     move there, they move here. Cents, so nothing rounds. */
+  var FEES = { year_cents: 120000, buyer_cents: 1000, seller_cents: 2500, site_share: 0.5 };
+  var ENGINE = "https://api.gigapoo.com";
+
+  function money(c) { return "$" + (c / 100).toLocaleString("en-US", { minimumFractionDigits: (c % 100) ? 2 : 0, maximumFractionDigits: 2 }); }
+  var total = FEES.buyer_cents + FEES.seller_cents, site = Math.round(total * FEES.site_share);
+  document.getElementById("fee-year").textContent = money(FEES.year_cents);
+  document.getElementById("share-pct").textContent = Math.round(FEES.site_share * 100) + "%";
+  document.getElementById("fee-buyer").textContent = money(FEES.buyer_cents);
+  document.getElementById("fee-seller").textContent = money(FEES.seller_cents);
+  document.getElementById("fee-total").textContent = money(total);
+  document.getElementById("fee-site").textContent = money(site);
+  document.getElementById("fee-engine").textContent = money(total - site);
+
+  /* the copy button on the directions */
+  var cp = document.getElementById("copy");
+  cp.addEventListener("click", function () {
+    var t = '<script src="https://gigapoo.com/gigs.js" data-site="YOUR-KEY"><\/script>\n<div id="gigs"></div>';
+    var done = function () { cp.textContent = "Copied — now paste it into your page"; setTimeout(function () { cp.textContent = "Copy the two lines"; }, 3000); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, done); else done();
+  });
+
+  /* the site owner's application — goes to the engine; nothing is stored here */
+  var f = document.getElementById("f"), msg = document.getElementById("s-msg"), go = document.getElementById("s-go");
+  f.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var d = {}; ["name", "email", "phone", "site"].forEach(function (k) { d[k] = (document.getElementById("s-" + k).value || "").trim(); });
+    msg.className = "msg";
+    if (d.name.split(/\s+/).length < 2) { msg.className = "msg err"; msg.textContent = "A first and last name, please — nobody here is anonymous."; return; }
+    if (d.email.indexOf("@") < 1) { msg.className = "msg err"; msg.textContent = "An email address we can reach."; return; }
+    if (d.phone.replace(/\D/g, "").length < 10) { msg.className = "msg err"; msg.textContent = "A telephone number with an area code — we call before a key is issued."; return; }
+    if (!/^https?:\/\/.+\..+/.test(d.site)) { msg.className = "msg err"; msg.textContent = "The full address of the site, starting with https://"; return; }
+    go.disabled = true; msg.textContent = "Sending…";
+    var p = new URLSearchParams(d); p.set("action", "site");
+    fetch(ENGINE + "/?" + p.toString()).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.ok) { msg.className = "msg ok"; msg.textContent = "Received. A person will telephone you before a key is issued — usually within a day."; f.reset(); }
+      else { throw new Error((j && j.error) || "no"); }
+    }).catch(function () {
+      msg.className = "msg err"; msg.textContent = "The engine did not answer just now. Email realroofers@gmail.com with the four lines above and we will call you.";
+      go.disabled = false;
+    });
+  });
+})();
+</script>
+</body>
+</html>

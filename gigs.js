@@ -1,4 +1,4 @@
-/* BUILT 2026-09-20 · gigapoo gigs.js 1a
+/* BUILT 2026-09-20 · gigapoo gigs.js 1b (1b: #sell/#need/#wanted in the URL and gigapoo.open() open a door)
    ============================================================================
    THE EMBED. One line on any site puts the gig market on it:
 
@@ -124,6 +124,12 @@
     if (door === "need")    return needForm(extra || {});
     if (door === "sell")    return sellForm();
   }
+  /* a host page's own links can open a door: <a href="#sell">, or
+     gigapoo.open("need"). gigapoo.com's header uses both. */
+  var DOORS = ["offered", "wanted", "need", "sell"];
+  function openDoor(door) { if (DOORS.indexOf(door) < 0) return; pick(door); show(door); root.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  window.gigapoo = window.gigapoo || {}; window.gigapoo.open = openDoor;
+  window.addEventListener("hashchange", function () { openDoor(location.hash.slice(1)); });
 
   /* ---- offered ------------------------------------------------------------ */
   function sellerHead(by) {
@@ -295,6 +301,7 @@
     }).catch(function () { pane.innerHTML = '<div class="warn">Could not reach the market.</div>'; });
   }
 
-  offered();
+  var first = location.hash.slice(1);
+  if (DOORS.indexOf(first) > -1 && first !== "offered") { pick(first); show(first); } else offered();
   } /* boot */
 })();
