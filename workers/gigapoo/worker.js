@@ -51,6 +51,87 @@
      return is its own market. (The old year_cents / site_share_bps columns
      stay in gp_fees at zero so nothing that reads them breaks.)
 
+   ⚠ GIGS, JOBS AND EVENTS — AND NOTHING IS FREE. His rule, 20 Sep, looking
+     at the WordPress marketplace builders: "allow for jobs and events if
+     people are holding them — a type of meetup and gig economy. Only paid
+     events, same service charge paid every 6 months. Emphasize the concept:
+     free has no value, for events and for gigs."
+       A GIG is an offer or a request, as before. A JOB is a request with
+     kind='job' — ongoing work at a rate, not a one-off. An EVENT is held by
+     a verified seller (a host is not anonymous either) at a date, a place or
+     online, with a description, a location, a limit on attendance if the
+     host wants one, and A PRICE — the engine refuses a $0 event, a $0 offer
+     and a $0 bid alike. Every kind of event: meetup, class, talk, walk, dinner.
+
+   ⚠ WHO COMES TO AN EVENT, AND HOW THEY PAY. His rule, 20 Sep: "all event
+     attendees must register with Gigapoo with their name and their picture,
+     email, to be verified by the event creator. Attendees can get a credit
+     line; the event creators take the risk of receiving payment and so
+     does Gigapoo — but it's better to receive larger payments — and they
+     should be paid with achpay.com."
+       So an ATTENDEE registers once (gp_attendees): full name, email,
+     telephone, AND A PICTURE — no picture, no ticket. They ask to attend;
+     the HOST sees the name, the picture and the email and approves or
+     declines. Approval is the credit line: the ticket is a sale on the
+     site's books at once, in state 'credit' — owed, not yet received. It
+     settles by ACH through achpay.com (?action=sale&ticket=… flips it to
+     'paid'). The half-year bill counts credit sales as sales: the host and
+     the house carry the risk together, and a larger payment received is
+     worth the wait. Seats are taken by approved and paid tickets; requests
+     wait.
+
+   ⚠ SECURITY AT EVENTS IS THE PICTURE AND THE HOST. His rule, 20 Sep: "the
+     best security for events is the picture and the event coordinator, who
+     should have the right to ban an attendee temporarily or permanently.
+     All attendee profiles should give hometown and present location area.
+     All should be welcome but security is key: telephone numbers required
+     in profile or no attendance." So an attendee's profile carries name,
+     telephone, email, picture, HOMETOWN and PRESENT LOCATION (city and
+     country) — none optional. The host sees all of it before saying yes,
+     and may bar an attendee from their events for N days or for good
+     (gp_bans; ?action=ban / ?action=unban). The house may bar from all.
+
+   ⚠ MEMBERS HEAR WHAT IS NEW NEAR THEM. His rule, 20 Sep: "members should
+     get announcement of new gig opportunities and new event opportunities in
+     their area, and be able to change their desired location as people
+     travel." So every attendee (and every seller) carries a WATCH AREA — a
+     city and country they want news from, separate from where they are now
+     — changed any time with ?action=watch. ?action=news&token= is what is
+     new there (events and requests of the last 14 days). ?action=digest
+     (house) builds one message per member and sends it when a MAIL binding
+     (MAIL_URL + MAIL_KEY, Resend-shaped) is set; without one it returns the
+     messages for sending by hand. Nothing is sent to a member who turned
+     alerts off.
+
+   ⚠ CREDIT IS FOR EVENT ATTENDANCE ONLY. His emphasis, 20 Sep: the credit
+     line is for people coming to events, NOT for those hiring gig workers —
+     a gig is paid up front and held until done. And a request may be marked
+     ANYONE COULD DO THIS (anyone=1): no skill needed, any verified seller
+     may bid; the roster shows it as such.
+
+   ⚠ EVERYONE IS REVIEWED, 140 CHARACTERS AT MOST. His rule, 20 Sep: event
+     creators, gig workers, event attendees and the people who hire gig
+     workers all get reviewed. gp_reviews holds them: who it is about
+     (seller:<id>, host:<id>, attendee:<id>, buyer:<email>), who wrote it,
+     the sale or ticket it rests on, one to five stars, and at most 140
+     characters — refused if longer, never cut. Published as written, under
+     the writer's name, and nobody takes one down. A buyer's rating of a
+     seller (?action=rate) is the same table with the same cap.
+
+   ⚠ STRIPE IN, ACHPAY OUT. His rule, 20 Sep: "implement Stripe for gig
+     workers, except they must also have achpay.com to receive our payment;
+     they absorb the Stripe fees." So a gig is paid by card through Stripe
+     Checkout (?action=checkout&key=<site>&offer=…); Stripe's webhook
+     (POST ?stripe=1, signature checked) puts the sale on the books with
+     rail 'stripe' and Stripe's fee (gp_fees.stripe_bps + stripe_fixed_cents,
+     2.9% + 30¢ by default) charged to the SELLER, not the buyer. Payout is
+     by ACH through achpay.com only: a seller's achpay address is on their
+     profile (join: achpay=…, or ?action=bank&token=…&achpay=…) and
+     ?action=payout refuses without it. Event tickets never touch Stripe —
+     they are credit, settled by ACH.
+     VARIABLES  STRIPE_SECRET, STRIPE_WEBHOOK_SECRET (cf.ps1 setvar; never in
+     a file). Without them ?action=checkout says so and nothing else changes.
+
    ⚠ EACH SITE'S MARKET HAS A PURPOSE. His rule, 20 Sep: Warrant Wire and
      8K10Q want READERS AND AUDIO OPINIONS ON FINANCE, 18 AND OLDER; a
      community site wants opportunities for youth, seniors and everyone.
@@ -90,8 +171,26 @@
                                          guardian_name, guardian_phone (under 18)]
      ?action=want        a buyer asks   site, subject, name, email, phone,
                                         where=remote|in_place, [city, country,
-                                        budget, note]
-     ?action=rate        a buyer rates  seller, ref, name, email, stars, [words]
+                                        budget, note, kind=gig|job, rate]
+     ?events=1&site=<key>                            what is on — paid events, dated
+     ?event=<id>                                     one event
+     ?action=register    an attendee registers once: name, email, phone, hometown,
+                         city, country → a token
+     ?apic=<attendee id>                             the attendee's picture
+     ?pins=events&site=<key>                         events with a position, for the map
+     ?pins=sellers&site=<key>                        sellers near, at ~1 km — never the exact point
+
+   ATTENDEE — needs the attendee token
+     ?action=attendee_photo&token=…   POST the picture as the body (required before any ticket)
+     ?action=attend&token=…&event=<id>[&seats=]   ask to attend
+     ?action=tickets&token=…          my tickets and what I owe
+     ?action=watch&token=…&city=&country=[&alerts=0|1]   my desired area for news (travel: change it any time)
+     ?action=news&token=…             what is new in my area: events and requests, last 14 days
+     ?action=rate        a buyer rates  seller, ref, name, email, stars, [words ≤140]
+     ?action=review&token=…  everyone else: about=host:<id>|attendee:<id>|buyer:<email>,
+                             ref=<ticket or sale id>, stars, [words ≤140]
+                             (a seller token reviews a buyer or an attendee of their
+                              event; an attendee token reviews a host)
      ?action=site        a site applies name, email, phone, site (the domain)
      ?photo=<seller id>                              the photograph
 
@@ -99,15 +198,30 @@
      ?action=offer&token=…   what I can do: title, price, [blurb, delivery,
                              where, days, category, site, advice=1]
      ?action=bid&token=…     answer a request: request, price, [delivery, note]
+     ?action=event&token=…   hold an event: title, price, starts (YYYY-MM-DDTHH:MM),
+                             [blurb, city, country, venue, online=1, seats, site]
+     ?action=guests&token=…&event=<id>       who asked to come: name, picture, email
+     ?action=approve&token=…&ticket=<id>     let them in — opens the credit line
+     ?action=decline&token=…&ticket=<id>
+     ?action=ban&token=…&attendee=<id>[&days=30][&why=]   bar them from your events (no days = for good)
+     ?action=unban&token=…&attendee=<id>
+     ?action=reach&token=…&event=<id>[&who=in|asked|all]   the telephone and email list
+                             of who is coming, with sms: and mailto: links to send one
+                             message from the host's own phone (small bulk)
      ?action=where&token=…   check in: city, country, [region, lat, lng]
+     ?action=bank&token=…&achpay=<your achpay.com address>   where Gigapoo pays you
      ?action=me&token=…      what is mine
      ?action=photo&token=…   POST the image as the body
 
    SITE — needs the site key
      ?action=ledger&key=<site key>        the site's sales, this half's bill, its invoices
      ?action=sale&key=…                   record a sale: seller, price, [offer, request,
-                                          buyer_email, where, ref]  (the pay desk, or
-                                          the site's own checkout; the house key works too)
+                                          event, ticket, buyer_email, where, ref]
+                                          (the pay desk, or the site's own checkout; the
+                                          house key works too; a paid ticket is a sale)
+     ?action=checkout&key=…&offer=<id>&buyer_email=…[&name=&success=<url>&cancel=<url>]
+                                          a Stripe Checkout page for a gig; the webhook books the sale
+     POST ?stripe=1                       Stripe's webhook (checkout.session.completed)
      ?action=hide&key=…&seller=<id>       keep someone off this site
      ?action=unhide&key=…&seller=<id>
 
@@ -130,7 +244,23 @@
      ?action=stats
    ========================================================================== */
 
-const BUILD = "gigapoo-1c · 2026-09-20 · the engine: every site's books, the half-year bill, purpose and age per site";
+const BUILD = "gigapoo-1d · 2026-09-20 · the engine: gigs, jobs and paid events on every site's books; attendees registered and verified by the host; credit settled by ACH; nothing is free";
+const NOTHING_FREE = "Free has no value here. Every gig, job and event carries a price.";
+const ACH = "achpay.com";   /* the rail tickets settle on — his call, 20 Sep */
+/* HIS RULE, 20 Sep, on meetups: "people want for free but that costs time and
+   problems. The minimum price to attend an event is $5; we get 5% of the
+   6-month total; if the attendee signs up they have to agree to pay for their
+   attendance even though we are giving a credit line. They pay the system;
+   we pay the creator of the events." */
+const MIN_TICKET_CENTS = 500;
+const REVIEW_MAX = 140;
+const CREDIT_IS_FOR_EVENTS = "Credit is for coming to events. A gig is paid up front and held until the work is done.";
+const PAYS_THE_SYSTEM = "You pay Gigapoo; Gigapoo pays the host.";
+/* HIS RULE, 20 Sep, from eleven years of running a meetup: contact is
+   critical; people must be able to search for the TYPE of event they want;
+   the fee per event weeds out the time-wasters; attendees sign and agree to
+   pay their ACCUMULATED credit, and WE CHARGE NO INTEREST. */
+const NO_INTEREST = "Credit accumulates across events and is paid by ACH; Gigapoo charges no interest on it.";
 const LOCATION_STALE_DAYS = 30;
 const DELIVERY = ["text", "voice", "own", "file", "in_person"];
 const WHERE = ["remote", "in_place"];
@@ -143,7 +273,9 @@ const FEE_DEFAULTS = { year_cents: 0, buyer_cents: 1000,
   seller_text_cents: 2500, seller_voice_cents: 5000, seller_own_cents: 7500,
   site_share_bps: 0,
   house_small_bps: 1000, house_large_bps: 500, house_threshold_cents: 100000,
-  due_days: 30, late_days: 180 };
+  due_days: 30, late_days: 180,
+  ticket_buyer_cents: 200, ticket_host_cents: 100,   /* per seat: a $15 ticket is not a $150 reading */
+  stripe_bps: 290, stripe_fixed_cents: 30 };          /* Stripe's card fee, absorbed by the seller */
 
 /* the house's own sites, live from the first request, each with its purpose */
 const HOUSE_SITES = [
@@ -171,6 +303,7 @@ export default {
 
     await setup(env);
     try {
+      if (q.get("stripe") && req.method === "POST") return json(await stripeHook(env, req), H);
       /* ⚠ THE ACTION IS READ FIRST, ALWAYS, AND EVERY BARE LOOKUP IS GUARDED
          BY IT — the lesson from nujobi-1b, where ?action=bid&request=1 was
          answered by the public request listing. */
@@ -178,39 +311,75 @@ export default {
 
       /* ⚠ A PAUSED SITE ANSWERS NOTHING BUT "PAUSED". Every public read and
          write that names a site goes through the gate first. */
-      if (q.get("site") && ["", "join", "want", "offer"].indexOf(a) > -1) {
+      if (q.get("site") && ["", "join", "want", "offer", "event"].indexOf(a) > -1) {
         const g = await gate(env, q.get("site"));
         if (g && g.off) return json({ ok:false, build: BUILD, paused:true, site: g.key, error: g.why }, H, 402);
       }
 
       if (!a) {
         if (q.get("photo"))   return await servePhoto(env, q.get("photo"));
+        if (q.get("apic"))    return await servePhoto(env, q.get("apic"), "attendee");
+        if (q.get("epic"))    return await servePhoto(env, q.get("epic"), "event");
+        if (q.get("pictures")) return json(await pictures(env, q, u.origin), H);
+        if (q.get("pins"))    return json(await pins(env, q, u.origin), H);
         if (q.get("seller"))  return json(await profile(env, q.get("seller"), u.origin), H);
         if (q.get("request")) return json(await oneRequest(env, q.get("request")), H);
         if (q.get("sellers")) return json(await roster(env, q, u.origin), H);
         if (q.get("offers"))  return json(await offers(env, q, u.origin), H);
         if (q.get("requests")) return json(await wanted(env, q), H);
+        if (q.get("events")) return json(await events(env, q, u.origin), H);
+        if (q.get("event"))  return json(await oneEvent(env, q.get("event"), u.origin), H);
         if (q.get("fees"))    return json(await feesPublic(env), H);
         if (q.get("site"))    return json(await siteInfo(env, q.get("site")), H);
       }
       if (a === "join")  return json(await join(env, q), H);
       if (a === "want")  return json(await want(env, q), H);
+      if (a === "register") return json(await register(env, q), H);
+      if (a === "review") {
+        const s = await bySeller(env, q.get("token")), w = s ? null : await byAttendee(env, q.get("token"));
+        if (!s && !w) return json({ ok:false, build: BUILD, error:"a seller's or an attendee's token" }, H, 401);
+        return json(await review(env, s, w, q), H);
+      }
       if (a === "rate")  return json(await rate(env, q), H);
       if (a === "site")  return json(await siteApply(env, q), H);
 
+      /* ---- attendee, by their token ---- */
+      if (["attendee_photo", "attend", "tickets", "watch", "news"].indexOf(a) > -1) {
+        const who = await byAttendee(env, q.get("token"));
+        if (!who) return json({ ok:false, build: BUILD, error:"not a registered attendee — register first (name, email, telephone, picture)" }, H, 401);
+        if (a === "attendee_photo") return json(await putPhoto(env, who, req, u.origin, "attendee"), H);
+        if (a === "attend") return json(await attend(env, who, q), H);
+        if (a === "watch") return json(await watch(env, "gp_attendees", who, q), H);
+        if (a === "news") return json(await news(env, who.watch_city || who.city, who.watch_country || who.country, 14, u.origin), H);
+        return json(await myTickets(env, who), H);
+      }
+
       /* ---- seller, by token ---- */
-      if (["offer", "bid", "where", "me", "photo"].indexOf(a) > -1) {
+      if (["offer", "bid", "event", "event_photo", "guests", "approve", "decline", "ban", "unban", "reach", "watch", "news", "where", "bank", "me", "photo"].indexOf(a) > -1) {
         const me = await bySeller(env, q.get("token"));
         if (!me) return json({ ok:false, build: BUILD, error:"not a verified seller" }, H, 401);
         if (a === "offer") return json(await offer(env, me, q), H);
         if (a === "bid")   return json(await bid(env, me, q), H);
+        if (a === "event") return json(await holdEvent(env, me, q), H);
+        if (a === "event_photo") {
+          const e = await env.OVERHANG.prepare("SELECT id FROM gp_events WHERE id = ? AND host_id = ?").bind(q.get("event"), me.id).first();
+          if (!e) return json({ ok:false, error:"not your event" }, H, 403);
+          return json(await putPhoto(env, e, req, u.origin, "event"), H);
+        }
+        if (a === "guests") return json(await guests(env, me, q.get("event"), u.origin), H);
+        if (a === "approve" || a === "decline") return json(await decide(env, me, q.get("ticket"), a === "approve"), H);
+        if (a === "ban" || a === "unban") return json(await ban(env, me.id, q, a === "ban"), H);
+        if (a === "reach") return json(await reach(env, me, q), H);
+        if (a === "watch") return json(await watch(env, "gp_sellers", me, q), H);
+        if (a === "news") return json(await news(env, me.watch_city || me.city, me.watch_country || me.country, 14, u.origin), H);
         if (a === "where") return json(await whereAmI(env, me, q), H);
+        if (a === "bank")  return json(await bank(env, me, q), H);
         if (a === "photo") return json(await putPhoto(env, me, req, u.origin), H);
         return json(await mine(env, me, u.origin), H);
       }
 
       /* ---- site, by its key (the house key opens any site's desk) ---- */
-      if (["ledger", "hide", "unhide", "sale"].indexOf(a) > -1) {
+      if (["ledger", "hide", "unhide", "sale", "checkout"].indexOf(a) > -1) {
         const k = req.headers.get("X-Auth-Key") || q.get("key");
         const house = !!env.LOG_KEY && k === env.LOG_KEY;
         /* the ledger and a sale still work while a site is off — the books
@@ -219,6 +388,7 @@ export default {
         if (!site) return json({ ok:false, build: BUILD, error: house ? "which site? (&site=key)" : "not a live site key" }, H, 401);
         if (a === "ledger") return json(await ledger(env, site), H);
         if (a === "sale")   return json(await sale(env, site, q), H);
+        if (a === "checkout") return json(await checkout(env, site, q, u.origin), H);
         return json(await hideSeller(env, site, q.get("seller"), a === "hide"), H);
       }
 
@@ -235,6 +405,9 @@ export default {
       if (a === "books")        return json(await books(env), H);
       if (a === "bill")         return json(await bill(env, q.get("half")), H);
       if (a === "paid")         return json(await markPaid(env, q.get("invoice"), q.get("note")), H);
+      if (a === "payout")       return json(await payout(env, q.get("sale"), q.get("ref")), H);
+      if (a === "ban" || a === "unban") return json(await ban(env, 0, q, a === "ban"), H);   /* the house bars from every event */
+      if (a === "digest")       return json(await digest(env, q, u.origin), H);
       if (a === "off" || a === "on") return json(await switchSite(env, q.get("id"), a === "off", q.get("why")), H);
       if (a === "fees")         return json(await setFees(env, q), H);
       if (a === "requests")     return json(await allRequests(env), H);
@@ -362,6 +535,86 @@ async function setup(env) {
   await add("ALTER TABLE gp_fees ADD COLUMN house_threshold_cents INTEGER DEFAULT 100000");
   await add("ALTER TABLE gp_fees ADD COLUMN due_days INTEGER DEFAULT 30");
   await add("ALTER TABLE gp_fees ADD COLUMN late_days INTEGER DEFAULT 180");
+  await add("ALTER TABLE gp_fees ADD COLUMN ticket_buyer_cents INTEGER DEFAULT 200");
+  await add("ALTER TABLE gp_fees ADD COLUMN ticket_host_cents INTEGER DEFAULT 100");
+  await add("ALTER TABLE gp_fees ADD COLUMN stripe_bps INTEGER DEFAULT 290");
+  await add("ALTER TABLE gp_fees ADD COLUMN stripe_fixed_cents INTEGER DEFAULT 30");
+  await add("ALTER TABLE gp_sales ADD COLUMN stripe_fee_cents INTEGER DEFAULT 0");
+  await add("ALTER TABLE gp_sellers ADD COLUMN achpay TEXT");   /* where Gigapoo pays them — required before any payout */
+  /* 1d — a request is a gig (one-off) or a job (ongoing, at a rate) */
+  await add("ALTER TABLE gp_requests ADD COLUMN kind TEXT DEFAULT 'gig'");
+  await add("ALTER TABLE gp_requests ADD COLUMN rate TEXT");
+  await add("ALTER TABLE gp_requests ADD COLUMN anyone INTEGER DEFAULT 0");   /* no skill needed — anyone could do this */
+  await D.prepare(
+    `CREATE TABLE IF NOT EXISTS gp_reviews (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       about TEXT NOT NULL,        /* seller:12 | host:12 | attendee:4 | buyer:jane@x */
+       by_who TEXT NOT NULL,       /* seller:5 | attendee:4 | buyer:jane@x */
+       by_name TEXT NOT NULL, ref TEXT NOT NULL,
+       stars INTEGER NOT NULL, words TEXT,
+       made TEXT DEFAULT (datetime('now')),
+       UNIQUE (about, by_who, ref))`).run();
+  await add("ALTER TABLE gp_sales ADD COLUMN event_id INTEGER");
+
+  /* ⚠ EVENTS — held by a verified seller, dated, placed, PRICED. A $0 event
+     is refused: free has no value. Tickets are reserved with a name, an
+     email and a telephone, and become sales when paid. */
+  await D.prepare(
+    `CREATE TABLE IF NOT EXISTS gp_events (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       host_id INTEGER NOT NULL, site TEXT,
+       title TEXT NOT NULL, blurb TEXT,
+       starts TEXT NOT NULL,                      /* ISO, the host's local time as given */
+       online INTEGER DEFAULT 0, venue TEXT, city TEXT, country TEXT,
+       cents INTEGER NOT NULL, seats INTEGER,
+       state TEXT DEFAULT 'live',                 /* live | cancelled | done */
+       made TEXT DEFAULT (datetime('now')))`).run();
+  /* ⚠ ATTENDEES register once with Gigapoo: name, email, telephone, and a
+     picture. The host sees all four before letting them in. */
+  await D.prepare(
+    `CREATE TABLE IF NOT EXISTS gp_attendees (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, phone TEXT NOT NULL,
+       photo_key TEXT, token TEXT NOT NULL,
+       made TEXT DEFAULT (datetime('now')))`).run();
+  await D.prepare(
+    `CREATE TABLE IF NOT EXISTS gp_tickets (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       event_id INTEGER NOT NULL, attendee_id INTEGER NOT NULL, seats INTEGER DEFAULT 1,
+       name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL,
+       state TEXT DEFAULT 'requested',            /* requested | approved (credit) | paid | declined | cancelled */
+       sale_id INTEGER, decided TEXT, made TEXT DEFAULT (datetime('now')),
+       UNIQUE (event_id, email))`).run();
+  await add("ALTER TABLE gp_sales ADD COLUMN rail TEXT");   /* 'achpay.com' on tickets */
+  await add("ALTER TABLE gp_events ADD COLUMN photo_key TEXT");   /* the promotional picture, in the header */
+  await add("ALTER TABLE gp_tickets ADD COLUMN agreed TEXT");     /* when the attendee agreed to pay */
+  await add("ALTER TABLE gp_attendees ADD COLUMN hometown TEXT");
+  await add("ALTER TABLE gp_attendees ADD COLUMN city TEXT");      /* present location area */
+  await add("ALTER TABLE gp_attendees ADD COLUMN country TEXT");
+  await add("ALTER TABLE gp_attendees ADD COLUMN watch_city TEXT");     /* the desired area — news comes from here */
+  await add("ALTER TABLE gp_attendees ADD COLUMN watch_country TEXT");
+  await add("ALTER TABLE gp_attendees ADD COLUMN alerts INTEGER DEFAULT 1");
+  await add("ALTER TABLE gp_attendees ADD COLUMN last_digest TEXT");
+  await add("ALTER TABLE gp_sellers ADD COLUMN watch_city TEXT");
+  await add("ALTER TABLE gp_sellers ADD COLUMN watch_country TEXT");
+  await add("ALTER TABLE gp_sellers ADD COLUMN alerts INTEGER DEFAULT 1");
+  await D.prepare(
+    `CREATE TABLE IF NOT EXISTS gp_bans (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       host_id INTEGER NOT NULL,                  /* 0 = the house: barred from every event */
+       attendee_id INTEGER NOT NULL,
+       until TEXT,                                /* NULL = permanent */
+       why TEXT, made TEXT DEFAULT (datetime('now')),
+       lifted TEXT)`).run();
+  await add("ALTER TABLE gp_sales ADD COLUMN host_paid TEXT");     /* when Gigapoo paid the host */
+  await add("ALTER TABLE gp_sales ADD COLUMN host_ref TEXT");
+  await add("ALTER TABLE gp_events ADD COLUMN copied_from INTEGER"); /* the archive is for copying: this one came from that one */
+  await add("ALTER TABLE gp_events ADD COLUMN kind TEXT");
+  await add("ALTER TABLE gp_events ADD COLUMN lat REAL");   /* geocoded from the place, for the map with icons */
+  await add("ALTER TABLE gp_events ADD COLUMN lng REAL");
+  /* the geocode cache: a place as written → a point. OpenStreetMap's
+     Nominatim, one call per new place, kept for good. */
+  await D.prepare("CREATE TABLE IF NOT EXISTS gp_geo (place TEXT PRIMARY KEY, lat REAL, lng REAL, made TEXT DEFAULT (datetime('now')))").run();            /* the type: walk, talk, dinner, class, game… the host's word, searchable */
   /* the yearly fee and the share back are gone (20 Sep); zero them where they were */
   await D.prepare("UPDATE gp_fees SET year_cents = 0, site_share_bps = 0 WHERE id = 1 AND (year_cents <> 0 OR site_share_bps <> 0)").run();
 
@@ -475,7 +728,9 @@ async function feesPublic(env) {
   const f = await fees(env);
   return { ok:true, build: BUILD,
     on_every_sale: { from_the_buyer: money(f.buyer_cents),
-      from_the_seller: { written: money(f.seller_text_cents), with_a_machine_voice: money(f.seller_voice_cents), with_the_sellers_own_voice: money(f.seller_own_cents) } },
+      from_the_seller: { written: money(f.seller_text_cents), with_a_machine_voice: money(f.seller_voice_cents), with_the_sellers_own_voice: money(f.seller_own_cents) },
+      on_a_ticket_per_seat: { from_the_buyer: money(f.ticket_buyer_cents), from_the_host: money(f.ticket_host_cents) } },
+    nothing_is_free: NOTHING_FREE,
     the_site_pays_gigapoo: { every: "6 months",
       rate_when_the_half_is_over: money(f.house_threshold_cents), then: pct(f.house_large_bps),
       rate_otherwise: pct(f.house_small_bps),
@@ -488,9 +743,9 @@ async function setFees(env, q) {
   const n = k => q.get(k) != null ? Math.max(0, Math.round(Number(q.get(k)))) : f[k];
   await env.OVERHANG.prepare(
     `UPDATE gp_fees SET buyer_cents=?, seller_text_cents=?, seller_voice_cents=?, seller_own_cents=?,
-       house_small_bps=?, house_large_bps=?, house_threshold_cents=?, due_days=?, late_days=?, changed=datetime('now') WHERE id=1`)
+       house_small_bps=?, house_large_bps=?, house_threshold_cents=?, due_days=?, late_days=?, ticket_buyer_cents=?, ticket_host_cents=?, changed=datetime('now') WHERE id=1`)
     .bind(n("buyer_cents"), n("seller_text_cents"), n("seller_voice_cents"), n("seller_own_cents"),
-          n("house_small_bps"), n("house_large_bps"), n("house_threshold_cents"), n("due_days"), n("late_days")).run();
+          n("house_small_bps"), n("house_large_bps"), n("house_threshold_cents"), n("due_days"), n("late_days"), n("ticket_buyer_cents"), n("ticket_host_cents")).run();
   return { ok:true, build: BUILD, fees: await fees(env) };
 }
 
@@ -597,6 +852,7 @@ async function join(env, q) {
           clean(q.get("org")) || null, clean(q.get("credential")) || null, shorten(q.get("about"), 320) || null,
           shorten(q.get("education"), 160) || null, url(q.get("linkedin"), "linkedin.com"), year(q.get("since")),
           site, yes(q.get("bank")) ? 1 : 0, born, age < 18 ? gName : null, age < 18 ? gPhone : null).run();
+  if (clean(q.get("achpay"))) await env.OVERHANG.prepare("UPDATE gp_sellers SET achpay=? WHERE id=?").bind(shorten(q.get("achpay"), 120), lastId(r)).run();
 
   return { ok:true, build: BUILD, id: lastId(r), state:"applied",
     note:"Applied. A person telephones you before anything you write is published. " +
@@ -718,7 +974,7 @@ function pubOffer(v, f, seller) {
 async function offer(env, me, q) {
   const title = clean(q.get("title")), amount = cents(q.get("price"));
   if (!title || title.length < 6) return { ok:false, error:"say what you can do, in a sentence" };
-  if (!amount) return { ok:false, error:"what does it cost?" };
+  if (!amount) return { ok:false, error:"what does it cost? " + NOTHING_FREE };
   const delivery = pick(q.get("delivery"), DELIVERY) || "text";
   const where = pick(q.get("where"), WHERE) || (delivery === "in_person" ? "in_place" : "remote");
   const advice = yes(q.get("advice"));
@@ -794,31 +1050,41 @@ async function want(env, q) {
   /* an 18+ site takes the buyer's word for their age, on the record */
   const sr = await siteRow(env, site);
   if (sr && Number(sr.min_age) >= 18 && !yes(q.get("adult"))) missing.push("confirmation that you are " + sr.min_age + " or older — " + sr.name + " is for adults");
+  /* a job is ongoing work at a rate — the rate is required, because free has no value */
+  const kind = pick(q.get("kind"), ["gig", "job"]) || "gig", rateS = shorten(q.get("rate"), 40);
+  if (kind === "job" && !rateS) missing.push("the pay — a rate like $25/hour or $900/week. " + NOTHING_FREE);
   if (missing.length) return { ok:false, build: BUILD, error:"incomplete", missing };
   const r = await env.OVERHANG.prepare(
-    `INSERT INTO gp_requests (site, subject, note, where_, budget_cents, buyer_name, buyer_email, buyer_phone, city, country)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`)
+    `INSERT INTO gp_requests (site, subject, note, where_, budget_cents, buyer_name, buyer_email, buyer_phone, city, country, kind, rate)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
     .bind(site, shorten(subject, 160), shorten(q.get("note"), 600) || null, where, cents(q.get("budget")) || null,
-          name, email, phone || null, city || null, country || null).run();
-  return { ok:true, build: BUILD, id: lastId(r), where,
+          name, email, phone || null, city || null, country || null, kind, kind === "job" ? rateS : null).run();
+  if (yes(q.get("anyone"))) await env.OVERHANG.prepare("UPDATE gp_requests SET anyone=1 WHERE id=?").bind(lastId(r)).run();
+  return { ok:true, build: BUILD, id: lastId(r), where, kind, anyone: yes(q.get("anyone")), paying: CREDIT_IS_FOR_EVENTS,
     note: where === "in_place"
       ? "Open for bids. A person will telephone you before any seller sees where the work is. Money is held until you say the job is done."
       : "Open for bids. Nothing is owed and no bid has to be taken." };
 }
 async function wanted(env, q) {
   const site = clean(q.get("site")) || null, where = pick(q.get("where"), WHERE);
-  let sql = `SELECT r.id, r.site, r.subject, r.note, r.where_, r.budget_cents, r.city, r.country, r.buyer_name, r.buyer_verified, r.made,
-                    (SELECT COUNT(*) FROM gp_bids b WHERE b.request_id = r.id AND b.state='open') bids
+  let sql = `SELECT r.id, r.site, r.subject, r.note, r.where_, r.budget_cents, r.city, r.country, r.buyer_name, r.buyer_verified, r.made, r.kind, r.rate, r.anyone,
+                    (SELECT COUNT(*) FROM gp_bids b WHERE b.request_id = r.id AND b.state='open') bids,
+                    (SELECT COUNT(*) FROM gp_reviews v WHERE v.about = 'buyer:' || r.buyer_email) reviews,
+                    (SELECT ROUND(AVG(stars),1) FROM gp_reviews v WHERE v.about = 'buyer:' || r.buyer_email) stars
                FROM gp_requests r WHERE r.state = 'open'`;
   const binds = [];
   if (site) { sql += " AND r.site = ?"; binds.push(site); }
   if (where) { sql += " AND r.where_ = ?"; binds.push(where); }
+  const kind = pick(q.get("kind"), ["gig", "job"]);
+  if (kind) { sql += " AND COALESCE(r.kind,'gig') = ?"; binds.push(kind); }
   sql += " ORDER BY r.made DESC LIMIT 200";
   const st = env.OVERHANG.prepare(sql);
   const r = await (binds.length ? st.bind(...binds) : st).all();
   /* ⚠ PUBLIC: the buyer's first name and city, never the email, the phone or the address */
   return { ok:true, build: BUILD, site: site || "all", where: where || "all",
     requests: (r.results || []).map(x => ({ id: x.id, site: x.site, subject: x.subject, note: x.note, where: x.where_,
+      kind: x.kind || "gig", rate: x.rate || null, anyone: !!x.anyone,
+      buyer_reviews: Number(x.reviews) || 0, buyer_stars: (Number(x.reviews) || 0) ? Number(x.stars) : null,
       budget: x.budget_cents ? money(x.budget_cents) : null,
       near: x.where_ === "in_place" && x.city ? x.city + ", " + x.country : null,
       by: String(x.buyer_name || "").split(/\s+/)[0], buyer_verified: !!x.buyer_verified, bids: Number(x.bids) || 0, made: x.made })) };
@@ -842,7 +1108,7 @@ async function allRequests(env) {
 async function bid(env, me, q) {
   const rid = q.get("request"), amount = cents(q.get("price"));
   if (!rid) return { ok:false, error:"which request?" };
-  if (!amount) return { ok:false, error:"what do you charge for it?" };
+  if (!amount) return { ok:false, error:"what do you charge for it? " + NOTHING_FREE };
   const r = await env.OVERHANG.prepare("SELECT id, where_, state FROM gp_requests WHERE id = ?").bind(rid).first();
   if (!r) return { ok:false, error:"no such request" };
   if (r.state !== "open") return { ok:false, error:"that request is closed" };
@@ -862,9 +1128,491 @@ async function mine(env, me, origin) {
   const b = await env.OVERHANG.prepare(`SELECT b.id, b.cents, b.state, b.made, r.subject, r.where_ FROM gp_bids b JOIN gp_requests r ON r.id = b.request_id WHERE b.seller_id = ? ORDER BY b.made DESC LIMIT 50`).bind(me.id).all();
   const s = await env.OVERHANG.prepare("SELECT COUNT(*) n, SUM(price_cents - seller_fee_cents) earned FROM gp_sales WHERE seller_id = ? AND state IN ('released')").bind(me.id).first();
   const f = await fees(env);
+  const ev = await env.OVERHANG.prepare(EVENT_SQL + " WHERE e.host_id = ? AND e.state = 'live' ORDER BY e.starts LIMIT 50").bind(me.id).all();
   return { ok:true, build: BUILD, you: pubSeller(Object.assign({}, me, { reviews: 0 }), origin),
     offers: (o.results || []).map(v => pubOffer(v, f)), bids: b.results || [],
-    sales: { released: Number(s && s.n) || 0, earned: money(Number(s && s.earned) || 0) } };
+    events: (ev.results || []).map(v => pubEvent(v, f, origin)),
+    sales: { released: Number(s && s.n) || 0, earned: money(Number(s && s.earned) || 0) },
+    paid_through: me.achpay ? ACH + " · " + me.achpay : "nothing on file — add your achpay.com address (?action=bank) or you cannot be paid" };
+}
+
+/* ============================================================
+   EVENTS — a meetup, a class, a talk, a walk. Held by a verified
+   seller, at a date, at a place or online, WITH A PRICE. A ticket
+   is reserved with a name, an email and a telephone; it is a sale
+   on the site's books the moment it is paid.
+   ============================================================ */
+/* maps and directions, generated from the place as given — no key, no
+   geocoding of ours; the map service finds it from the words */
+function mapsFor(v) {
+  if (v.online) return { map: null, directions: null, embed: null };
+  const place = [v.venue, v.city, v.country].filter(Boolean).join(", ");
+  if (!place) return { map: null, directions: null, embed: null };
+  const qs = encodeURIComponent(place);
+  return { place, map: "https://www.google.com/maps/search/?api=1&query=" + qs,
+    directions: "https://www.google.com/maps/dir/?api=1&destination=" + qs,
+    embed: "https://maps.google.com/maps?q=" + qs + "&z=14&output=embed" };
+}
+function pubEvent(v, f, origin) {
+  const sold = Number(v.sold) || 0, held = Number(v.held) || 0;
+  const m = mapsFor(v);
+  return { id: v.id, site: v.site || null, title: v.title, kind: v.kind || null, blurb: v.blurb || null,
+    picture: v.photo_key ? ((origin || "") + "/?epic=" + v.id) : null,
+    starts: v.starts, online: !!v.online, venue: v.online ? null : (v.venue || null),
+    where: v.online ? "online" : [v.city, v.country].filter(Boolean).join(", "),
+    map: m.map, directions: m.directions, map_embed: m.embed,
+    copied_from: v.copied_from || null,
+    price: money(v.cents), buyer_pays: money(v.cents + Number(f.ticket_buyer_cents || 0)),
+    seats: v.seats || null, going: sold, waiting: held, left: v.seats ? Math.max(0, v.seats - sold) : null,
+    to_attend: "Register with Gigapoo — name, email, telephone and a picture — and ask; the host verifies who is coming. Approval opens your credit line; it settles by ACH through " + ACH + ".",
+    state: v.state, made: v.made,
+    host: v.host_name ? { id: v.host_id, name: v.host_name, city: v.host_city, country: v.host_country, photo: v.host_photo ? ((origin || "") + "/?photo=" + v.host_id) : null,
+      reviews: Number(v.reviews) || 0, stars: (Number(v.reviews) || 0) ? Number(v.stars) : null } : undefined };
+}
+const EVENT_SQL = `SELECT e.*, s.name host_name, s.city host_city, s.country host_country, s.photo_key host_photo,
+                    (SELECT COALESCE(SUM(seats),0) FROM gp_tickets t WHERE t.event_id = e.id AND t.state IN ('approved','paid')) sold,
+                    (SELECT COALESCE(SUM(seats),0) FROM gp_tickets t WHERE t.event_id = e.id AND t.state = 'requested') held,
+                    (SELECT COUNT(*) FROM gp_ratings g WHERE g.seller_id = s.id) reviews,
+                    (SELECT ROUND(AVG(stars),1) FROM gp_ratings g WHERE g.seller_id = s.id) stars
+               FROM gp_events e JOIN gp_sellers s ON s.id = e.host_id`;
+async function holdEvent(env, me, q) {
+  /* ⚠ THE ARCHIVE IS FOR COPYING. copy=<id> starts from any past or present
+     event — the host's own or anyone's — and each field given here overrides. */
+  let from = null;
+  if (q.get("copy")) { from = await env.OVERHANG.prepare("SELECT * FROM gp_events WHERE id = ?").bind(q.get("copy")).first(); if (!from) return { ok:false, error:"no such event to copy" }; }
+  const g = (k, fk) => { const v = clean(q.get(k)); return v || (from ? clean(from[fk || k]) : ""); };
+  const title = g("title"), amount = cents(q.get("price")) || (from ? from.cents : 0), starts = clean(q.get("starts"));
+  const online = q.get("online") != null ? yes(q.get("online")) : !!(from && from.online);
+  const city = g("city") || me.city, country = g("country") || me.country;
+  const missing = [];
+  if (!title || title.length < 6) missing.push("what the event is, in a sentence");
+  /* ⚠ NO FREE EVENTS. His rule: free has no value. */
+  if (!amount) missing.push("a ticket price — " + NOTHING_FREE);
+  else if (amount < MIN_TICKET_CENTS) missing.push("a ticket price of at least " + money(MIN_TICKET_CENTS) + " — free, and nearly free, costs everyone time and problems");
+  if (!/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(starts)) missing.push("when it starts (YYYY-MM-DDTHH:MM)");
+  else if (Date.parse(starts) < Date.now() - 3600000) missing.push("a start in the future");
+  if (!online && (!city || !country)) missing.push("where it is — city and country — or mark it online");
+  if (!online && locationState(me).stale) missing.push("a current location — check in before holding an in-person event");
+  if (missing.length) return { ok:false, build: BUILD, error:"incomplete", missing };
+  const site = clean(q.get("site")) || me.home_site || null;
+  const sr = site ? await bySite(env, site) : null;
+  if (site && !sr) return { ok:false, error:"no such site, or that site's market is paused" };
+  if (sr && Number(sr.min_age) > 0) { const age = ageOf(me.born); if (age == null || age < Number(sr.min_age)) return { ok:false, error: sr.name + " is for hosts " + sr.min_age + " and older" }; }
+  const seatsIn = q.get("seats") != null ? num(q.get("seats")) : (from ? from.seats : null);
+  const seats = seatsIn == null ? null : Math.max(1, Math.round(seatsIn));
+  const blurb = shorten(q.get("blurb"), 1200) || (from ? from.blurb : null) || null;
+  const kind = shorten(q.get("kind"), 40).toLowerCase() || (from ? from.kind : null) || null;
+  const venue = online ? null : (shorten(q.get("venue"), 120) || (from ? from.venue : null) || null);
+  const r = await env.OVERHANG.prepare(
+    `INSERT INTO gp_events (host_id, site, title, blurb, starts, online, venue, city, country, cents, seats, copied_from, kind) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .bind(me.id, site, shorten(title, 120), blurb, starts, online ? 1 : 0, venue, online ? null : city, online ? null : country, amount, seats, from ? from.id : null, kind).run();
+  const id = lastId(r), f = await fees(env);
+  if (!online) { const pt = await geocode(env, [venue, city, country].filter(Boolean).join(", ")) || await geocode(env, [city, country].filter(Boolean).join(", ")); if (pt) await env.OVERHANG.prepare("UPDATE gp_events SET lat=?, lng=? WHERE id=?").bind(pt.lat, pt.lng, id).run(); }
+  /* a copy carries the promotional picture too, unless a new one is posted */
+  if (from && from.photo_key) await env.OVERHANG.prepare("UPDATE gp_events SET photo_key=? WHERE id=?").bind(from.photo_key, id).run();
+  const m = mapsFor({ online, venue, city, country });
+  return { ok:true, build: BUILD, id, price: money(amount), buyer_pays: money(amount + Number(f.ticket_buyer_cents || 0)),
+    you_keep_per_ticket: money(amount - Number(f.ticket_host_cents || 0)), starts, where: online ? "online" : city + ", " + country,
+    map: m.map, directions: m.directions, copied_from: from ? from.id : null,
+    picture: "POST a promotional picture to ?action=event_photo&event=" + id + "&token=… — it heads the event",
+    note: "On. Your name, city and country show as the host; your telephone does not. People who ask to come are registered with Gigapoo — name, picture, email, telephone — and you decide who is in. Approval opens their credit line; it settles by ACH through " + ACH + "." };
+}
+/* ---- the map with icons: a place becomes a point, once ---- */
+async function geocode(env, place) {
+  place = clean(place); if (!place) return null;
+  const key = place.toLowerCase();
+  const had = await env.OVERHANG.prepare("SELECT lat, lng FROM gp_geo WHERE place = ?").bind(key).first();
+  if (had) return had.lat == null ? null : { lat: had.lat, lng: had.lng };
+  let pt = null;
+  try {
+    const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(place),
+      { headers: { "User-Agent": "Gigapoo/1.0 (realroofers@gmail.com)", "Accept": "application/json" } });
+    const j = r.ok ? await r.json() : [];
+    if (j && j[0]) pt = { lat: Number(j[0].lat), lng: Number(j[0].lon) };
+  } catch (e) { pt = null; }
+  await env.OVERHANG.prepare("INSERT OR REPLACE INTO gp_geo (place, lat, lng) VALUES (?,?,?)").bind(key, pt ? pt.lat : null, pt ? pt.lng : null).run();
+  return pt;
+}
+/* ~1 km: two decimals. The exact point is never published. */
+function coarse(v) { return v == null ? null : Math.round(Number(v) * 100) / 100; }
+async function pins(env, q, origin) {
+  const what = pick(q.get("pins"), ["events", "sellers"]) || "events", site = clean(q.get("site")) || null;
+  const f = await fees(env);
+  if (what === "events") {
+    let sql = EVENT_SQL + " WHERE e.state = 'live' AND s.state = 'verified' AND e.online = 0 AND e.starts >= datetime('now')";
+    const binds = [];
+    if (site) { sql += " AND (e.site = ? OR e.site IS NULL)"; binds.push(site); }
+    const r = await env.OVERHANG.prepare(sql + " ORDER BY e.starts LIMIT 300").bind(...binds).all();
+    const out = [];
+    for (const v of (r.results || [])) {
+      let lat = v.lat, lng = v.lng;
+      if (lat == null) { const pt = await geocode(env, [v.venue, v.city, v.country].filter(Boolean).join(", ")) || await geocode(env, [v.city, v.country].filter(Boolean).join(", ")); if (pt) { lat = pt.lat; lng = pt.lng; await env.OVERHANG.prepare("UPDATE gp_events SET lat=?, lng=? WHERE id=?").bind(lat, lng, v.id).run(); } }
+      if (lat == null) continue;
+      const e = pubEvent(v, f, origin);
+      out.push({ id: e.id, lat, lng, title: e.title, kind: e.kind, starts: e.starts, where: e.where, venue: e.venue, price: e.buyer_pays, going: e.going, picture: e.picture, host: e.host ? e.host.name : null });
+    }
+    return { ok:true, build: BUILD, pins: out, icon: "event" };
+  }
+  /* sellers: their point at ~1 km if they shared one; else their city */
+  let sql = `SELECT s.id, s.name, s.city, s.country, s.lat, s.lng, s.nomad, s.location_on, s.location_at, s.credential, s.photo_key,
+                    (SELECT COUNT(*) FROM gp_offers o WHERE o.seller_id = s.id AND o.state = 'live'` + (site ? " AND (o.site = ?1 OR o.site IS NULL)" : "") + `) offers,
+                    (SELECT title FROM gp_offers o WHERE o.seller_id = s.id AND o.state = 'live' ORDER BY made DESC LIMIT 1) latest
+               FROM gp_sellers s WHERE s.state = 'verified'`;
+  const binds = [];
+  if (site) { binds.push(site); sql += " AND s.id NOT IN (SELECT seller_id FROM gp_hidden WHERE site = ?1) AND (s.home_site = ?1 OR s.id IN (SELECT seller_id FROM gp_offers WHERE site = ?1 AND state='live'))"; }
+  const st = env.OVERHANG.prepare(sql + " LIMIT 500");
+  const r = await (binds.length ? st.bind(...binds) : st).all();
+  const out = [];
+  for (const s of (r.results || [])) {
+    const loc = locationState(s); if (loc.stale) continue;
+    let lat = coarse(s.lat), lng = coarse(s.lng);
+    if (lat == null) { const pt = await geocode(env, [s.city, s.country].filter(Boolean).join(", ")); if (pt) { lat = coarse(pt.lat); lng = coarse(pt.lng); } }
+    if (lat == null) continue;
+    out.push({ id: s.id, lat, lng, name: s.name, city: s.city, country: s.country, nomad: !!s.nomad, credential: s.credential || null, offers: Number(s.offers) || 0, latest: s.latest || null, photo: s.photo_key ? ((origin || "") + "/?photo=" + s.id) : null, about: "~1 km — never the exact point" });
+  }
+  return { ok:true, build: BUILD, pins: out, icon: "seller", rule: "A seller's point is shown to about a kilometre, or at their city. The exact position is never published." };
+}
+
+/* the events on a site: what is coming, or with past=1 THE ARCHIVE — every
+   event ever held, kept for copying; q= searches title, description, venue,
+   city, host — and the pictures come with them */
+async function events(env, q, origin) {
+  const site = clean(q.get("site")) || null, past = yes(q.get("past")), word = clean(q.get("q")).toLowerCase();
+  let sql = EVENT_SQL + " WHERE s.state = 'verified'";
+  const binds = [];
+  if (past) { sql += " AND e.starts < ?"; binds.push(new Date().toISOString().slice(0, 16)); }
+  else { sql += " AND e.state = 'live' AND e.starts >= ?"; binds.push(new Date(Date.now() - 6 * 3600000).toISOString().slice(0, 16)); }
+  if (site) { sql += " AND (e.site = ? OR e.site IS NULL) AND s.id NOT IN (SELECT seller_id FROM gp_hidden WHERE site = ?)"; binds.push(site, site); }
+  if (word) { sql += " AND (lower(e.title) LIKE ? OR lower(COALESCE(e.blurb,'')) LIKE ? OR lower(COALESCE(e.venue,'')) LIKE ? OR lower(COALESCE(e.city,'')) LIKE ? OR lower(s.name) LIKE ? OR lower(COALESCE(e.kind,'')) LIKE ?)"; for (let i = 0; i < 6; i++) binds.push("%" + word + "%"); }
+  const kind = clean(q.get("kind")).toLowerCase();
+  if (kind) { sql += " AND lower(COALESCE(e.kind,'')) = ?"; binds.push(kind); }
+  sql += past ? " ORDER BY e.starts DESC LIMIT 200" : " ORDER BY e.starts LIMIT 200";
+  const r = await env.OVERHANG.prepare(sql).bind(...binds).all();
+  const f = await fees(env);
+  /* the types on offer, so a reader can pick one — the hosts' own words, counted */
+  const kr = await env.OVERHANG.prepare("SELECT lower(kind) kind, COUNT(*) n FROM gp_events WHERE kind IS NOT NULL AND state='live' AND starts >= datetime('now') " + (site ? "AND (site = ? OR site IS NULL) " : "") + "GROUP BY lower(kind) ORDER BY n DESC LIMIT 40").bind(...(site ? [site] : [])).all();
+  return { ok:true, build: BUILD, site: site || "all", archive: past, q: word || null, kind: kind || null, kinds: (kr.results || []).map(x => ({ kind: x.kind, n: x.n })),
+    events: (r.results || []).map(v => pubEvent(v, f, origin)), rule: NOTHING_FREE,
+    note: past ? "The archive. Every detail is kept for copying — a host starts a new event from any of these with ?action=event&copy=<id>." : null };
+}
+/* one event, in full — and WHO IS COMING: the name and picture of everyone
+   the host let in, on credit or paid. His rule: show them. */
+async function oneEvent(env, id, origin) {
+  const v = await env.OVERHANG.prepare(EVENT_SQL + " WHERE e.id = ?").bind(id).first();
+  if (!v) return { ok:false, error:"no such event" };
+  const a = await env.OVERHANG.prepare(
+    `SELECT t.name, t.seats, t.state, a.id aid, a.photo_key, a.hometown FROM gp_tickets t JOIN gp_attendees a ON a.id = t.attendee_id
+      WHERE t.event_id = ? AND t.state IN ('approved','paid') ORDER BY t.decided`).bind(id).all();
+  const hostRev = await env.OVERHANG.prepare("SELECT stars, words, by_name, made FROM gp_reviews WHERE about = ? ORDER BY made DESC LIMIT 20").bind("host:" + v.host_id).all();
+  return { ok:true, build: BUILD, event: pubEvent(v, await fees(env), origin),
+    host_as_host: Object.assign(await starsOf(env, "host:" + v.host_id), { reviews_said: (hostRev.results || []).map(x => ({ stars: x.stars, said: x.words, by: x.by_name, on: x.made })) }),
+    attending: (a.results || []).map(t => ({ name: t.name, hometown: t.hometown || null, picture: t.photo_key ? ((origin || "") + "/?apic=" + t.aid) : null, seats: t.seats, paid: t.state === "paid" })),
+    copy: "A host starts a new event from this one with ?action=event&copy=" + id + "&starts=…" };
+}
+/* every picture, searchable through its event: the promotional pictures,
+   and the faces of the people who came */
+async function pictures(env, q, origin) {
+  const word = clean(q.get("q")).toLowerCase(), site = clean(q.get("site")) || null;
+  let sql = `SELECT e.id, e.title, e.starts, e.city, e.country, e.photo_key, s.name host FROM gp_events e JOIN gp_sellers s ON s.id = e.host_id WHERE 1=1`;
+  const binds = [];
+  if (site) { sql += " AND (e.site = ? OR e.site IS NULL)"; binds.push(site); }
+  if (word) { sql += " AND (lower(e.title) LIKE ? OR lower(COALESCE(e.blurb,'')) LIKE ? OR lower(COALESCE(e.city,'')) LIKE ? OR lower(s.name) LIKE ?)"; for (let i = 0; i < 4; i++) binds.push("%" + word + "%"); }
+  sql += " ORDER BY e.starts DESC LIMIT 100";
+  const r = await env.OVERHANG.prepare(sql).bind(...binds).all();
+  const out = [];
+  for (const e of (r.results || [])) {
+    const a = await env.OVERHANG.prepare("SELECT t.name, a.id aid FROM gp_tickets t JOIN gp_attendees a ON a.id = t.attendee_id WHERE t.event_id = ? AND t.state IN ('approved','paid') AND a.photo_key IS NOT NULL").bind(e.id).all();
+    out.push({ event: e.id, title: e.title, starts: e.starts, where: [e.city, e.country].filter(Boolean).join(", "), host: e.host,
+      picture: e.photo_key ? ((origin || "") + "/?epic=" + e.id) : null,
+      people: (a.results || []).map(t => ({ name: t.name, picture: (origin || "") + "/?apic=" + t.aid })) });
+  }
+  return { ok:true, build: BUILD, q: word || null, events: out };
+}
+/* ---- the attendee: registered once with Gigapoo, verified by each host ---- */
+async function register(env, q) {
+  const name = clean(q.get("name")), email = clean(q.get("email")).toLowerCase(), phone = clean(q.get("phone"));
+  const hometown = shorten(q.get("hometown"), 80), city = clean(q.get("city")), country = clean(q.get("country"));
+  const missing = [];
+  if (!name || name.split(/\s+/).length < 2) missing.push("your full name — nobody here is anonymous");
+  if (!email || email.indexOf("@") < 1) missing.push("an email address");
+  /* ⚠ TELEPHONE REQUIRED OR NO ATTENDANCE. His words. */
+  if (!phone || phone.replace(/\D/g, "").length < 7) missing.push("a telephone number — required in the profile, or no attendance");
+  if (!hometown) missing.push("your hometown");
+  if (!city || !country) missing.push("where you are now — city and country");
+  if (missing.length) return { ok:false, build: BUILD, error:"incomplete", missing, note:"All are welcome; security is key. Name, telephone, email, picture, hometown and where you are now — the host sees them all." };
+  const had = await env.OVERHANG.prepare("SELECT id, token, photo_key FROM gp_attendees WHERE email = ?").bind(email).first();
+  if (had) {
+    await env.OVERHANG.prepare("UPDATE gp_attendees SET phone=?, hometown=?, city=?, country=? WHERE id=?").bind(phone, hometown, city, country, had.id).run();
+    return { ok:true, build: BUILD, already:true, id: had.id, token: had.token, has_picture: !!had.photo_key,
+      note:"That email is registered; telephone, hometown and present location updated. " + (had.photo_key ? "Your picture is on file." : "Add your picture before asking to attend — the host verifies who is coming.") };
+  }
+  const token = makeToken();
+  const r = await env.OVERHANG.prepare("INSERT INTO gp_attendees (name, email, phone, token, hometown, city, country, watch_city, watch_country) VALUES (?,?,?,?,?,?,?,?,?)").bind(name, email, phone, token, hometown, city, country, city, country).run();
+  return { ok:true, build: BUILD, id: lastId(r), token, has_picture:false,
+    note:"Registered. Now add your picture (POST it to ?action=attendee_photo&token=…) — no picture, no ticket. The host sees your name, your picture and your email before letting you in." };
+}
+async function byAttendee(env, token) {
+  if (!token || String(token).length < 12) return null;
+  return await env.OVERHANG.prepare("SELECT * FROM gp_attendees WHERE token = ?").bind(token).first();
+}
+/* ask to attend: the seat is not taken until the host says yes */
+async function attend(env, who, q) {
+  const id = q.get("event"), seats = Math.max(1, Math.min(20, Math.round(num(q.get("seats")) || 1)));
+  if (!id) return { ok:false, error:"which event?" };
+  if (!who.photo_key) return { ok:false, error:"add your picture first — the host verifies who is coming, and a name without a face is not a person" };
+  /* ⚠ THE AGREEMENT: a credit line is not a free ticket. No agreement, no request. */
+  if (!yes(q.get("agree"))) return { ok:false, error:"agree to pay for your attendance and your accumulated credit (agree=1) — the credit line lets you pay after, not never. " + NO_INTEREST + " " + PAYS_THE_SYSTEM, must_agree:true };
+  const v = await env.OVERHANG.prepare(EVENT_SQL + " WHERE e.id = ? AND e.state = 'live'").bind(id).first();
+  if (!v) return { ok:false, error:"that event is not on" };
+  /* ⚠ THE HOST'S BAN, OR THE HOUSE'S */
+  const barred = await env.OVERHANG.prepare(
+    "SELECT until, why, host_id FROM gp_bans WHERE attendee_id = ? AND host_id IN (0, ?) AND lifted IS NULL AND (until IS NULL OR until > datetime('now')) ORDER BY host_id LIMIT 1")
+    .bind(who.id, v.host_id).first();
+  if (barred) return { ok:false, error: (barred.host_id ? "the host of this event has barred you" : "you are barred from events on Gigapoo") + (barred.until ? " until " + String(barred.until).slice(0, 10) : " permanently") + (barred.why ? " — " + barred.why : ""), barred:true };
+  const ev = pubEvent(v, await fees(env));
+  if (ev.left != null && ev.left < seats) return { ok:false, error: ev.left ? "only " + ev.left + " seat" + (ev.left === 1 ? "" : "s") + " left" : "full" };
+  try {
+    const r = await env.OVERHANG.prepare("INSERT INTO gp_tickets (event_id, attendee_id, seats, name, email, phone, agreed) VALUES (?,?,?,?,?,?,datetime('now'))").bind(id, who.id, seats, who.name, who.email, who.phone).run();
+    return { ok:true, build: BUILD, ticket: lastId(r), event: ev.title, starts: ev.starts, seats, each: ev.buyer_pays, state:"requested",
+      agreed: "You agreed to pay " + money((v.cents + Number((await fees(env)).ticket_buyer_cents || 0)) * seats) + " for your attendance, and whatever credit you accumulate. " + NO_INTEREST,
+      note: "Asked. The host sees your name, picture and email and decides. If approved, that amount goes on your credit line and settles by ACH through " + ACH + ". " + PAYS_THE_SYSTEM + " " + NOTHING_FREE };
+  } catch (e) { return { ok:false, error:"you have already asked to attend this event" }; }
+}
+async function myTickets(env, who) {
+  const r = await env.OVERHANG.prepare(
+    `SELECT t.id, t.seats, t.state, t.made, t.decided, e.id event_id, e.title, e.starts, e.online, e.city, e.country, e.venue, e.cents, s.name host,
+            (SELECT price_cents + buyer_fee_cents FROM gp_sales x WHERE x.id = t.sale_id) owed_cents,
+            (SELECT state FROM gp_sales x WHERE x.id = t.sale_id) sale_state
+       FROM gp_tickets t JOIN gp_events e ON e.id = t.event_id JOIN gp_sellers s ON s.id = e.host_id
+      WHERE t.attendee_id = ? ORDER BY e.starts DESC LIMIT 100`).bind(who.id).all();
+  const rows = (r.results || []).map(v => ({ ticket: v.id, event: v.event_id, title: v.title, starts: v.starts, where: v.online ? "online" : [v.venue, v.city, v.country].filter(Boolean).join(", "),
+    host: v.host, seats: v.seats, state: v.state, decided: v.decided || null,
+    owed: v.sale_state === "credit" ? money(v.owed_cents) : null, paid: v.sale_state === "paid" }));
+  const owed = rows.reduce((a, v) => a + (v.owed ? Number(v.owed.replace(/[$,]/g, "")) : 0), 0);
+  return { ok:true, build: BUILD, you: { id: who.id, name: who.name, email: who.email, has_picture: !!who.photo_key, hometown: who.hometown || null, now: [who.city, who.country].filter(Boolean).join(", ") || null, watching: [who.watch_city || who.city, who.watch_country || who.country].filter(Boolean).join(", ") || null, alerts: who.alerts == null ? true : !!who.alerts }, tickets: rows,
+    on_credit: "$" + owed.toLocaleString("en-US", { minimumFractionDigits: (owed % 1) ? 2 : 0, maximumFractionDigits: 2 }),
+    settles_by: "ACH through " + ACH, interest: "none — " + NO_INTEREST };
+}
+/* ---- everyone reviews everyone they dealt with: 140 characters, as written ---- */
+async function review(env, seller, attendee, q) {
+  const about = clean(q.get("about")).toLowerCase(), ref = clean(q.get("ref")), stars = Math.round(Number(q.get("stars"))), words = clean(q.get("words"));
+  const m = /^(host|attendee|buyer):(.+)$/.exec(about);
+  if (!m) return { ok:false, error:"about=host:<id>, attendee:<id> or buyer:<email>" };
+  if (!ref) return { ok:false, error:"which ticket or sale? (&ref=)" };
+  if (!(stars >= 1 && stars <= 5)) return { ok:false, error:"one to five stars" };
+  if (words.length > REVIEW_MAX) return { ok:false, error: REVIEW_MAX + " characters at most — yours is " + words.length + ". Say it shorter; it is published as written." };
+  const kind = m[1], who = m[2];
+  let byWho, byName, allowed = false;
+  if (seller) {
+    byWho = "seller:" + seller.id; byName = seller.name;
+    if (kind === "attendee") allowed = !!(await env.OVERHANG.prepare("SELECT t.id FROM gp_tickets t JOIN gp_events e ON e.id = t.event_id WHERE t.id = ? AND t.attendee_id = ? AND e.host_id = ? AND t.state IN ('approved','paid')").bind(ref, who, seller.id).first());
+    if (kind === "buyer") allowed = !!(await env.OVERHANG.prepare("SELECT id FROM gp_sales WHERE id = ? AND seller_id = ? AND lower(buyer_email) = ?").bind(ref, seller.id, who).first());
+  } else {
+    byWho = "attendee:" + attendee.id; byName = attendee.name;
+    if (kind === "host") allowed = !!(await env.OVERHANG.prepare("SELECT t.id FROM gp_tickets t JOIN gp_events e ON e.id = t.event_id WHERE t.id = ? AND t.attendee_id = ? AND e.host_id = ? AND t.state IN ('approved','paid')").bind(ref, attendee.id, who).first());
+  }
+  if (!allowed) return { ok:false, error:"you can only review someone you dealt with, on the ticket or sale you dealt on" };
+  try {
+    await env.OVERHANG.prepare("INSERT INTO gp_reviews (about, by_who, by_name, ref, stars, words) VALUES (?,?,?,?,?,?)").bind(about, byWho, byName, ref, stars, words || null).run();
+  } catch (e) { return { ok:false, error:"you have already reviewed them on that one — a review cannot be changed once it is published" }; }
+  return { ok:true, build: BUILD, published:true, about, stars, words: words || null, note:"Published as written, under your name. Nobody can remove it, including us." };
+}
+async function starsOf(env, about) {
+  const r = await env.OVERHANG.prepare("SELECT COUNT(*) n, ROUND(AVG(stars),1) s FROM gp_reviews WHERE about = ?").bind(about).first();
+  return { reviews: Number(r && r.n) || 0, stars: (Number(r && r.n) || 0) ? Number(r.s) : null };
+}
+/* ---- the host's side: who asked, and yes or no ---- */
+async function guests(env, me, eventId, origin) {
+  if (!eventId) return { ok:false, error:"which event?" };
+  const e = await env.OVERHANG.prepare("SELECT * FROM gp_events WHERE id = ? AND host_id = ?").bind(eventId, me.id).first();
+  if (!e) return { ok:false, error:"not your event" };
+  const r = await env.OVERHANG.prepare(
+    `SELECT t.*, a.photo_key, a.hometown, a.city, a.country, (SELECT state FROM gp_sales x WHERE x.id = t.sale_id) sale_state,
+            (SELECT COUNT(*) FROM gp_reviews v WHERE v.about = 'attendee:' || t.attendee_id) reviews,
+            (SELECT ROUND(AVG(stars),1) FROM gp_reviews v WHERE v.about = 'attendee:' || t.attendee_id) stars,
+            (SELECT COUNT(*) FROM gp_bans b WHERE b.attendee_id = t.attendee_id AND b.host_id IN (0, ?) AND b.lifted IS NULL AND (b.until IS NULL OR b.until > datetime('now'))) barred
+       FROM gp_tickets t JOIN gp_attendees a ON a.id = t.attendee_id WHERE t.event_id = ? ORDER BY t.state, t.made`).bind(me.id, eventId).all();
+  /* ⚠ THE HOST SEES THE FACE, THE NAME, THE EMAIL, THE TELEPHONE, THE HOMETOWN AND WHERE THEY ARE NOW — that is the verification */
+  return { ok:true, build: BUILD, event: { id: e.id, title: e.title, starts: e.starts, seats: e.seats },
+    guests: (r.results || []).map(t => ({ ticket: t.id, attendee: t.attendee_id, name: t.name, email: t.email, phone: t.phone,
+      hometown: t.hometown || null, now: [t.city, t.country].filter(Boolean).join(", ") || null, barred: !!t.barred,
+      reviews: Number(t.reviews) || 0, stars: (Number(t.reviews) || 0) ? Number(t.stars) : null,
+      picture: t.photo_key ? ((origin || "") + "/?apic=" + t.attendee_id) : null,
+      seats: t.seats, state: t.state, asked: t.made, decided: t.decided || null,
+      money: t.sale_state === "credit" ? "on credit — settles by ACH" : t.sale_state === "paid" ? "paid" : null })) };
+}
+/* ---- what is new near a member, and the member's watch area ---- */
+async function watch(env, table, who, q) {
+  const city = clean(q.get("city")) || who.watch_city || who.city, country = clean(q.get("country")) || who.watch_country || who.country;
+  const alerts = q.get("alerts") != null ? (yes(q.get("alerts")) ? 1 : 0) : (who.alerts == null ? 1 : Number(who.alerts));
+  if (!city || !country) return { ok:false, error:"the area you want news from — city and country" };
+  await env.OVERHANG.prepare("UPDATE " + table + " SET watch_city=?, watch_country=?, alerts=? WHERE id=?").bind(city, country, alerts, who.id).run();
+  return { ok:true, build: BUILD, watching: city + ", " + country, alerts: !!alerts, note: alerts ? "You will hear what is new in " + city + " — events and gig requests. Change it whenever you travel." : "Alerts off. Your area is kept; turn them on any time." };
+}
+/* the news in an area: events coming up there (or online) and requests
+   posted there, in the last `days` days */
+async function news(env, city, country, days, origin) {
+  city = clean(city).toLowerCase(); country = clean(country).toLowerCase();
+  if (!city) return { ok:false, error:"no area on file — set one with ?action=watch" };
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 19).replace("T", " ");
+  const ev = await env.OVERHANG.prepare(EVENT_SQL + " WHERE e.state = 'live' AND s.state = 'verified' AND e.made >= ? AND e.starts >= datetime('now') AND (e.online = 1 OR (lower(e.city) = ? AND lower(COALESCE(e.country,'')) = ?)) ORDER BY e.starts LIMIT 50").bind(since, city, country).all();
+  const rq = await env.OVERHANG.prepare("SELECT id, site, subject, where_, kind, rate, budget_cents, city, country, buyer_name, made FROM gp_requests WHERE state = 'open' AND made >= ? AND (where_ = 'remote' OR (lower(city) = ? AND lower(COALESCE(country,'')) = ?)) ORDER BY made DESC LIMIT 50").bind(since, city, country).all();
+  const f = await fees(env);
+  return { ok:true, build: BUILD, area: city + ", " + country, since_days: days,
+    events: (ev.results || []).map(v => pubEvent(v, f, origin)),
+    requests: (rq.results || []).map(x => ({ id: x.id, site: x.site, subject: x.subject, kind: x.kind || "gig", rate: x.rate || null, where: x.where_, budget: x.budget_cents ? money(x.budget_cents) : null, near: x.where_ === "in_place" && x.city ? x.city + ", " + x.country : "remote", by: String(x.buyer_name || "").split(/\s+/)[0], made: x.made })) };
+}
+/* the digest: one message per member with alerts on, from their watch area.
+   Sent through MAIL (Resend-shaped: POST MAIL_URL with {from,to,subject,text})
+   when it is bound; otherwise returned, ready to send by hand. */
+async function digest(env, q, origin) {
+  const days = Math.max(1, Math.min(30, Math.round(num(q.get("days")) || 7))), send = yes(q.get("send")) && !!(env.MAIL_URL && env.MAIL_KEY);
+  const members = [];
+  const A = await env.OVERHANG.prepare("SELECT id, name, email, COALESCE(watch_city, city) city, COALESCE(watch_country, country) country FROM gp_attendees WHERE COALESCE(alerts,1) = 1").all();
+  const S = await env.OVERHANG.prepare("SELECT id, name, email, COALESCE(watch_city, city) city, COALESCE(watch_country, country) country FROM gp_sellers WHERE state = 'verified' AND COALESCE(alerts,1) = 1").all();
+  const seen = {};
+  for (const m of [...(A.results || []), ...(S.results || [])]) { if (!m.email || seen[m.email]) continue; seen[m.email] = 1; members.push(m); }
+  const out = [], byArea = {};
+  for (const m of members) {
+    const k = (m.city + "|" + m.country).toLowerCase();
+    if (!byArea[k]) byArea[k] = await news(env, m.city, m.country, days, origin);
+    const n = byArea[k]; if (!n.ok || (!n.events.length && !n.requests.length)) continue;
+    const lines = ["New near " + m.city + " on Gigapoo, last " + days + " days:", ""];
+    n.events.forEach(e => lines.push("EVENT · " + e.title + " — " + String(e.starts).replace("T", " ") + " · " + e.where + " · " + e.buyer_pays + " a seat" + (e.host ? " · held by " + e.host.name : "")));
+    n.requests.forEach(r => lines.push((r.kind === "job" ? "JOB" : "GIG") + " · " + r.subject + (r.rate ? " — " + r.rate : r.budget ? " — budget " + r.budget : "") + " · " + r.near));
+    lines.push("", "Change the area you hear from whenever you travel: gigapoo.com. Free has no value here.");
+    const msg = { to: m.email, name: m.name, area: m.city + ", " + m.country, subject: "New near " + m.city + ": " + n.events.length + " event" + (n.events.length === 1 ? "" : "s") + ", " + n.requests.length + " gig" + (n.requests.length === 1 ? "" : "s"), text: lines.join("\n") };
+    if (send) {
+      try {
+        const r = await fetch(env.MAIL_URL, { method: "POST", headers: { "Authorization": "Bearer " + env.MAIL_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({ from: env.MAIL_FROM || "Gigapoo <news@gigapoo.com>", to: [m.email], subject: msg.subject, text: msg.text }) });
+        msg.sent = r.ok; if (!r.ok) msg.error = (await r.text()).slice(0, 200);
+      } catch (e) { msg.sent = false; msg.error = String(e); }
+    }
+    out.push(msg);
+  }
+  return { ok:true, build: BUILD, days, members: members.length, messages: out.length, sent: send, mail_bound: !!(env.MAIL_URL && env.MAIL_KEY),
+    note: send ? null : (env.MAIL_URL ? "Add &send=1 to send." : "No MAIL binding (MAIL_URL, MAIL_KEY, MAIL_FROM) — set them with cf.ps1 setvar and the digest sends itself; until then, these are the messages."),
+    digest: out };
+}
+
+/* where Gigapoo pays the seller: their achpay.com address */
+async function bank(env, me, q) {
+  const a = shorten(q.get("achpay"), 120);
+  if (!a) return { ok:false, error:"your achpay.com address (the email or handle achpay knows you by)" };
+  await env.OVERHANG.prepare("UPDATE gp_sellers SET achpay=?, us_bank=1 WHERE id=?").bind(a, me.id).run();
+  return { ok:true, build: BUILD, achpay: a, note:"On file. Gigapoo pays you by ACH through " + ACH + " — nothing else. On a card-paid gig, Stripe's fee comes off your side." };
+}
+/* ---- Stripe in: a Checkout page for one gig, and the webhook that books it ---- */
+function form(o) { return Object.keys(o).map(k => encodeURIComponent(k) + "=" + encodeURIComponent(o[k])).join("&"); }
+async function checkout(env, site, q, origin) {
+  if (!env.STRIPE_SECRET) return { ok:false, error:"Stripe is not configured on the engine yet (STRIPE_SECRET) — until then a gig is booked with ?action=sale", not_configured:true };
+  const offerId = q.get("offer"), email = clean(q.get("buyer_email")).toLowerCase(), name = clean(q.get("name"));
+  if (!offerId) return { ok:false, error:"which offer?" };
+  if (!email || email.indexOf("@") < 1) return { ok:false, error:"the buyer's email" };
+  const o = await env.OVERHANG.prepare("SELECT o.*, s.name seller_name, s.achpay FROM gp_offers o JOIN gp_sellers s ON s.id = o.seller_id WHERE o.id = ? AND o.state = 'live' AND s.state = 'verified'").bind(offerId).first();
+  if (!o) return { ok:false, error:"no such offer" };
+  if (!o.achpay) return { ok:false, error: o.seller_name + " cannot be paid yet — no achpay.com address on file. Ask them to add it; then buy." };
+  const f = await fees(env), total = o.cents + f.buyer_cents;
+  const body = form({
+    "mode": "payment", "customer_email": email,
+    "line_items[0][quantity]": 1, "line_items[0][price_data][currency]": "usd", "line_items[0][price_data][unit_amount]": total,
+    "line_items[0][price_data][product_data][name]": o.title, "line_items[0][price_data][product_data][description]": "by " + o.seller_name + " · " + money(o.cents) + " to the seller + " + money(f.buyer_cents) + " flat fee",
+    "metadata[site]": site.key, "metadata[seller]": o.seller_id, "metadata[offer]": o.id, "metadata[buyer_email]": email, "metadata[buyer_name]": name, "metadata[delivery]": o.delivery || "text", "metadata[where]": o.where_ || "remote",
+    "success_url": clean(q.get("success")) || ("https://gigapoo.com/?paid=" + o.id), "cancel_url": clean(q.get("cancel")) || "https://gigapoo.com/"
+  });
+  const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { "Authorization": "Bearer " + env.STRIPE_SECRET, "Content-Type": "application/x-www-form-urlencoded" }, body });
+  const j = await r.json();
+  if (!r.ok) return { ok:false, error:"Stripe: " + ((j.error && j.error.message) || r.status) };
+  return { ok:true, build: BUILD, url: j.url, session: j.id, total: money(total), note:"Send the buyer to url. When they pay, Stripe calls the webhook and the sale goes on the books; the seller absorbs Stripe's fee." };
+}
+async function stripeHook(env, req) {
+  if (!env.STRIPE_WEBHOOK_SECRET) return { ok:false, error:"STRIPE_WEBHOOK_SECRET not set" };
+  const payload = await req.text(), sig = req.headers.get("Stripe-Signature") || "";
+  const parts = Object.fromEntries(sig.split(",").map(x => x.split("=")));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.STRIPE_WEBHOOK_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = Array.from(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(parts.t + "." + payload)))).map(b => b.toString(16).padStart(2, "0")).join("");
+  if (mac !== parts.v1) return { ok:false, error:"bad signature" };
+  const ev = JSON.parse(payload);
+  if (ev.type !== "checkout.session.completed") return { ok:true, ignored: ev.type };
+  const s = ev.data.object, m = s.metadata || {};
+  const site = await siteRow(env, m.site); if (!site) return { ok:false, error:"unknown site in metadata" };
+  const f = await fees(env);
+  const price = Number(s.amount_total || 0) - f.buyer_cents;   /* what the buyer paid, less our flat fee, is the seller's price */
+  const q = new URLSearchParams({ seller: m.seller, offer: m.offer, price: (price / 100).toFixed(2), buyer_email: m.buyer_email || s.customer_email || "", delivery: m.delivery || "text", where: m.where || "remote", ref: "stripe:" + s.id, rail: "stripe" });
+  return await sale(env, site, q);
+}
+
+/* THE HOST REACHES THEIR GUESTS. His ask, 20 Sep: a list of telephone
+   numbers so the coordinator can text and email a message — texting through
+   the creator's own phone, in small bulk. So: the numbers and the emails of
+   everyone in (or everyone who asked), a `sms:` link that opens the host's
+   own messaging app with all of them and the message, and a `mailto:` with
+   all of them in bcc. Nothing is sent by the engine; the host sends it, from
+   their phone, under their name. */
+async function reach(env, me, q) {
+  const eventId = q.get("event"); if (!eventId) return { ok:false, error:"which event?" };
+  const e = await env.OVERHANG.prepare("SELECT * FROM gp_events WHERE id = ? AND host_id = ?").bind(eventId, me.id).first();
+  if (!e) return { ok:false, error:"not your event" };
+  const who = pick(q.get("who"), ["in", "asked", "all"]) || "in";
+  const states = who === "in" ? "('approved','paid')" : who === "asked" ? "('requested')" : "('requested','approved','paid')";
+  const r = await env.OVERHANG.prepare("SELECT name, email, phone, seats, state FROM gp_tickets WHERE event_id = ? AND state IN " + states + " ORDER BY name").bind(eventId).all();
+  const rows = r.results || [];
+  const phones = rows.map(x => x.phone.replace(/[^\d+]/g, "")).filter(Boolean);
+  const emails = rows.map(x => x.email).filter(Boolean);
+  const msg = clean(q.get("message")) || (e.title + " — " + String(e.starts).replace("T", " ") + (e.online ? ", online" : ", " + [e.venue, e.city].filter(Boolean).join(", ")) + ". See you there. — " + me.name);
+  const uniq = a => a.filter((v, i) => a.indexOf(v) === i);
+  return { ok:true, build: BUILD, event: { id: e.id, title: e.title, starts: e.starts }, who, count: rows.length,
+    people: rows.map(x => ({ name: x.name, phone: x.phone, email: x.email, seats: x.seats, state: x.state })),
+    phones: uniq(phones).join(", "), emails: uniq(emails).join(", "),
+    text_them: "sms:" + uniq(phones).join(",") + "?body=" + encodeURIComponent(msg),          /* Android; iPhone reads it too on most versions */
+    text_them_ios: "sms:/open?addresses=" + uniq(phones).join(",") + "&body=" + encodeURIComponent(msg),
+    email_them: "mailto:?bcc=" + encodeURIComponent(uniq(emails).join(",")) + "&subject=" + encodeURIComponent(e.title) + "&body=" + encodeURIComponent(msg),
+    message: msg,
+    note: "Sent from your own phone and email, under your name. Small bulk: phones cap a group text at a few dozen; split a big list. The engine sends nothing itself." };
+}
+
+/* the host bars an attendee from their events — for N days, or for good.
+   The house (host_id 0) bars from every event. A ban is never deleted; it
+   is lifted, and the record stays. */
+async function ban(env, hostId, q, on) {
+  const aid = q.get("attendee"); if (!aid) return { ok:false, error:"which attendee? (&attendee=id)" };
+  const who = await env.OVERHANG.prepare("SELECT id, name FROM gp_attendees WHERE id = ?").bind(aid).first();
+  if (!who) return { ok:false, error:"no such attendee" };
+  if (!on) {
+    await env.OVERHANG.prepare("UPDATE gp_bans SET lifted=datetime('now') WHERE attendee_id=? AND host_id=? AND lifted IS NULL").bind(aid, hostId).run();
+    return { ok:true, build: BUILD, attendee: who.id, name: who.name, barred:false };
+  }
+  const days = num(q.get("days"));
+  const until = days && days > 0 ? new Date(Date.now() + days * 86400000).toISOString().slice(0, 19).replace("T", " ") : null;
+  await env.OVERHANG.prepare("INSERT INTO gp_bans (host_id, attendee_id, until, why) VALUES (?,?,?,?)").bind(hostId, aid, until, shorten(q.get("why"), 200) || null).run();
+  return { ok:true, build: BUILD, attendee: who.id, name: who.name, barred:true, until: until ? until.slice(0, 10) : "permanently",
+    from: hostId ? "your events" : "every event on Gigapoo", note:"Barred. They cannot ask to attend; a pending request of theirs should be declined. The record stays even when lifted." };
+}
+async function decide(env, me, ticketId, approve) {
+  if (!ticketId) return { ok:false, error:"which ticket?" };
+  const t = await env.OVERHANG.prepare("SELECT t.*, e.host_id, e.site, e.cents, e.seats event_seats, e.title FROM gp_tickets t JOIN gp_events e ON e.id = t.event_id WHERE t.id = ?").bind(ticketId).first();
+  if (!t || t.host_id !== me.id) return { ok:false, error:"not your guest" };
+  if (t.state !== "requested") return { ok:false, error:"that ticket is already " + t.state };
+  if (!approve) {
+    await env.OVERHANG.prepare("UPDATE gp_tickets SET state='declined', decided=datetime('now') WHERE id=?").bind(ticketId).run();
+    return { ok:true, build: BUILD, ticket: Number(ticketId), state:"declined" };
+  }
+  const v = await env.OVERHANG.prepare(EVENT_SQL + " WHERE e.id = ?").bind(t.event_id).first();
+  const f = await fees(env), ev = pubEvent(v, f);
+  if (ev.left != null && ev.left < t.seats) return { ok:false, error: ev.left ? "only " + ev.left + " seat" + (ev.left === 1 ? "" : "s") + " left" : "full" };
+  /* ⚠ APPROVAL IS THE CREDIT LINE: on the books now, in state 'credit'.
+     The host and the house carry it until the ACH clears. */
+  const amount = t.cents * t.seats;
+  const r = await env.OVERHANG.prepare(
+    `INSERT INTO gp_sales (site, seller_id, event_id, buyer_email, price_cents, buyer_fee_cents, seller_fee_cents, site_share_cents, where_, state, ref, rail)
+     VALUES (?,?,?,?,?,?,?,0,'in_place','credit',?,?)`)
+    .bind(t.site || "gigapoo", me.id, t.event_id, t.email, amount, Number(f.ticket_buyer_cents || 0) * t.seats, Number(f.ticket_host_cents || 0) * t.seats, "ticket-" + ticketId, ACH).run();
+  await env.OVERHANG.prepare("UPDATE gp_tickets SET state='approved', decided=datetime('now'), sale_id=? WHERE id=?").bind(lastId(r), ticketId).run();
+  return { ok:true, build: BUILD, ticket: Number(ticketId), state:"approved", guest: t.name, seats: t.seats,
+    on_credit: money(amount + Number(f.ticket_buyer_cents || 0) * t.seats), you_receive: money(amount - Number(f.ticket_host_cents || 0) * t.seats),
+    settles_by: "ACH through " + ACH,
+    note: "In. The amount is on the books as credit — owed, not yet received. They agreed to pay it when they asked. " + PAYS_THE_SYSTEM + " You and Gigapoo carry the credit until the ACH clears; a larger payment received is worth the wait." };
 }
 
 /* ============================================================
@@ -880,12 +1628,16 @@ async function rate(env, q) {
   if (!name || name.split(/\s+/).length < 2) missing.push("your full name");
   if (!email || email.indexOf("@") < 1) missing.push("your email address");
   if (!(stars >= 1 && stars <= 5)) missing.push("a rating from one to five");
+  const words = clean(q.get("words"));
+  if (words.length > REVIEW_MAX) missing.push(REVIEW_MAX + " characters at most — yours is " + words.length);
   if (missing.length) return { ok:false, build: BUILD, error:"incomplete", missing };
   const s = await env.OVERHANG.prepare("SELECT id FROM gp_sellers WHERE id = ? AND state = 'verified'").bind(seller).first();
   if (!s) return { ok:false, error:"no such seller" };
   try {
     await env.OVERHANG.prepare("INSERT INTO gp_ratings (seller_id, ref, buyer_name, buyer_email, stars, words) VALUES (?,?,?,?,?,?)")
-      .bind(seller, ref, name, email, stars, shorten(q.get("words"), 600) || null).run();
+      .bind(seller, ref, name, email, stars, words || null).run();
+    await env.OVERHANG.prepare("INSERT OR IGNORE INTO gp_reviews (about, by_who, by_name, ref, stars, words) VALUES (?,?,?,?,?,?)")
+      .bind("seller:" + seller, "buyer:" + email, name, ref, stars, words || null).run();
   } catch (e) {
     return { ok:false, build: BUILD, error:"you have already rated that job", note:"A rating cannot be changed once it is published." };
   }
@@ -906,12 +1658,17 @@ function parseHalf(s) {
 }
 /* a site's gross in one half, and what the house is owed on it at the rate the half earns */
 async function halfBooks(env, f, key, h) {
+  /* credit counts: an approved ticket is a sale the host and the house
+     carry until the ACH clears — the bill does not wait for it */
   const t = await env.OVERHANG.prepare(
-    "SELECT COUNT(*) sales, COALESCE(SUM(price_cents),0) gross FROM gp_sales WHERE site = ? AND state <> 'refunded' AND made >= ? AND made < ?")
+    "SELECT COUNT(*) sales, COALESCE(SUM(price_cents),0) gross, COALESCE(SUM(CASE WHEN state='credit' THEN price_cents ELSE 0 END),0) on_credit, COALESCE(SUM(CASE WHEN event_id IS NOT NULL THEN price_cents ELSE 0 END),0) tickets FROM gp_sales WHERE site = ? AND state <> 'refunded' AND made >= ? AND made < ?")
     .bind(key, h.from, h.to).first();
-  const gross = Number(t && t.gross) || 0, rate = houseRate(f, gross);
-  return { half: h.half, from: h.from, to: h.to, sales: Number(t && t.sales) || 0, gross_cents: gross, gross: money(gross),
-    rate_bps: rate, rate: pct(rate), due_cents: Math.round(gross * rate / 10000), due: money(Math.round(gross * rate / 10000)) };
+  /* gigs and jobs at the half's rate; EVENT TICKETS AT 5% OF THE SIX-MONTH TOTAL, his rule */
+  const gross = Number(t && t.gross) || 0, tickets = Number(t && t.tickets) || 0, gigs = gross - tickets;
+  const rate = houseRate(f, gigs), due = Math.round(gigs * rate / 10000) + Math.round(tickets * Number(f.house_large_bps) / 10000);
+  return { half: h.half, from: h.from, to: h.to, sales: Number(t && t.sales) || 0, gross_cents: gross, gross: money(gross), on_credit: money(Number(t && t.on_credit) || 0), settles_by: "ACH through " + ACH,
+    gigs_and_jobs: money(gigs), rate_bps: rate, rate: pct(rate), event_tickets: money(tickets), ticket_rate: pct(Number(f.house_large_bps)),
+    due_cents: due, due: money(due) };
 }
 function pubInvoice(v) {
   const days = Math.floor((Date.now() - Date.parse(String(v.issued).replace(" ", "T") + "Z")) / 86400000);
@@ -926,7 +1683,7 @@ async function ledger(env, site) {
   const t = await env.OVERHANG.prepare(
     `SELECT COUNT(*) sales, COALESCE(SUM(price_cents),0) gross, COALESCE(SUM(buyer_fee_cents + seller_fee_cents),0) fees
        FROM gp_sales WHERE site = ? AND state <> 'refunded'`).bind(site.key).first();
-  const rows = await env.OVERHANG.prepare("SELECT id, made, where_, seller_id, price_cents, buyer_fee_cents, seller_fee_cents, state, ref FROM gp_sales WHERE site = ? ORDER BY made DESC LIMIT 200").bind(site.key).all();
+  const rows = await env.OVERHANG.prepare("SELECT id, made, where_, seller_id, price_cents, buyer_fee_cents, seller_fee_cents, state, ref, event_id, rail FROM gp_sales WHERE site = ? ORDER BY made DESC LIMIT 200").bind(site.key).all();
   const inv = await env.OVERHANG.prepare("SELECT * FROM gp_invoices WHERE site = ? ORDER BY period_from DESC").bind(site.key).all();
   const g = await gate(env, site.key);
   return { ok:true, build: BUILD, site: Object.assign(pubSite(site), { state: site.state, paused: !!(g && g.off), why: g && g.off ? g.why : null }),
@@ -934,34 +1691,61 @@ async function ledger(env, site) {
     this_half: await halfBooks(env, f, site.key, halfOf(new Date())),
     terms: "Every six months Gigapoo bills " + pct(f.house_small_bps) + " of the half-year's sales on this site, or " + pct(f.house_large_bps) + " once they pass " + money(f.house_threshold_cents) + "; due in " + Number(f.due_days) + " days; " + Number(f.late_days) + " days late and the market here is switched off until paid.",
     invoices: (inv.results || []).map(pubInvoice),
-    sales: (rows.results || []).map(v => ({ id: v.id, made: v.made, where: v.where_, seller: v.seller_id, price: money(v.price_cents), state: v.state, ref: v.ref || null })) };
+    sales: (rows.results || []).map(v => ({ id: v.id, made: v.made, where: v.where_, seller: v.seller_id, price: money(v.price_cents), state: v.state, ref: v.ref || null, event: v.event_id || null, rail: v.rail || null })) };
 }
 
 /* ⚠ A SALE IS RECORDED HERE, ON EVERY SITE, OURS INCLUDED. The pay desk
    calls it when a buyer pays; a site with its own checkout calls it with
    its key. The books the house bills from are these rows. */
 async function sale(env, site, q) {
-  const sellerId = q.get("seller"), amount = cents(q.get("price"));
+  let sellerId = q.get("seller"), amount = cents(q.get("price")), eventId = q.get("event") || null, buyerEmail = clean(q.get("buyer_email")).toLowerCase() || null;
+  /* a paid ticket: the host is the seller, the price is seats × the ticket */
+  let ticket = null;
+  if (q.get("ticket")) {
+    ticket = await env.OVERHANG.prepare("SELECT t.*, e.host_id, e.cents FROM gp_tickets t JOIN gp_events e ON e.id = t.event_id WHERE t.id = ?").bind(q.get("ticket")).first();
+    if (!ticket) return { ok:false, error:"no such ticket" };
+    if (ticket.state === "paid") return { ok:true, build: BUILD, already:true, id: ticket.sale_id, note:"That ticket is already paid and on the books." };
+    if (ticket.state !== "approved") return { ok:false, error:"that ticket is " + ticket.state + " — the host has not let them in" };
+    /* ⚠ THE ACH CLEARED: the credit line closes. The sale was on the books
+       at approval; it turns from 'credit' to 'paid' — no second row. */
+    if (ticket.sale_id) {
+      await env.OVERHANG.prepare("UPDATE gp_sales SET state='paid', rail=COALESCE(?, rail), ref=COALESCE(?, ref) WHERE id=? AND state='credit'").bind(clean(q.get("rail")) || ACH, clean(q.get("ref")) || null, ticket.sale_id).run();
+      await env.OVERHANG.prepare("UPDATE gp_tickets SET state='paid' WHERE id=?").bind(ticket.id).run();
+      const f0 = await fees(env), h0 = await halfBooks(env, f0, site.key, halfOf(new Date()));
+      return { ok:true, build: BUILD, id: ticket.sale_id, site: site.key, kind:"ticket", state:"paid", settled_by: clean(q.get("rail")) || ACH,
+        guest: ticket.name, seats: ticket.seats, this_half: { gross: h0.gross, sales: h0.sales, gigapoo_is_owed_so_far: h0.due + " (" + h0.rate + ")" } };
+    }
+    sellerId = ticket.host_id; eventId = ticket.event_id; amount = amount || ticket.cents * (ticket.seats || 1); buyerEmail = buyerEmail || ticket.email;
+  }
   if (!sellerId) return { ok:false, error:"which seller?" };
-  if (!amount) return { ok:false, error:"the price paid, in dollars" };
+  if (!amount) return { ok:false, error:"the price paid, in dollars. " + NOTHING_FREE };
   const s = await env.OVERHANG.prepare("SELECT id, name FROM gp_sellers WHERE id = ? AND state = 'verified'").bind(sellerId).first();
   if (!s) return { ok:false, error:"no such verified seller" };
   const f = await fees(env);
   let delivery = pick(q.get("delivery"), DELIVERY);
   const offerId = q.get("offer") || null;
   if (offerId && !delivery) { const o = await env.OVERHANG.prepare("SELECT delivery FROM gp_offers WHERE id = ?").bind(offerId).first(); delivery = o ? o.delivery : null; }
-  const where = pick(q.get("where"), WHERE) || "remote";
+  const where = pick(q.get("where"), WHERE) || (eventId ? "in_place" : "remote");
+  const seatsN = ticket ? (Number(ticket.seats) || 1) : Math.max(1, Math.round(num(q.get("seats")) || 1));
   const ref = clean(q.get("ref")) || null;
+  /* the rail: stripe for a card-paid gig — Stripe's fee comes off the seller's side */
+  const rail = pick(q.get("rail"), ["stripe", "achpay.com", "cash", "other"]) || (eventId ? ACH : null);
+  const stripeFee = rail === "stripe" ? Math.round((amount + f.buyer_cents) * Number(f.stripe_bps || 0) / 10000) + Number(f.stripe_fixed_cents || 0) : 0;
   if (ref) { const had = await env.OVERHANG.prepare("SELECT id FROM gp_sales WHERE site = ? AND ref = ?").bind(site.key, ref).first();
     if (had) return { ok:true, build: BUILD, already:true, id: had.id, note:"That reference is already on the books." }; }
   const r = await env.OVERHANG.prepare(
-    `INSERT INTO gp_sales (site, seller_id, offer_id, request_id, buyer_email, price_cents, buyer_fee_cents, seller_fee_cents, site_share_cents, where_, state, ref)
-     VALUES (?,?,?,?,?,?,?,?,0,?,?,?)`)
-    .bind(site.key, s.id, offerId, q.get("request") || null, clean(q.get("buyer_email")).toLowerCase() || null, amount,
-          f.buyer_cents, sellerFee(f, delivery || "text"), where, where === "in_place" ? "held" : "paid", ref).run();
+    `INSERT INTO gp_sales (site, seller_id, offer_id, request_id, event_id, buyer_email, price_cents, buyer_fee_cents, seller_fee_cents, site_share_cents, where_, state, ref, rail, stripe_fee_cents)
+     VALUES (?,?,?,?,?,?,?,?,?,0,?,?,?,?,?)`)
+    .bind(site.key, s.id, offerId, q.get("request") || null, eventId, buyerEmail, amount,
+          eventId ? Number(f.ticket_buyer_cents || 0) * seatsN : f.buyer_cents, eventId ? Number(f.ticket_host_cents || 0) * seatsN : sellerFee(f, delivery || "text"),
+          where, (where === "in_place" && !eventId) ? "held" : "paid", ref, rail, stripeFee).run();
+  const saleId = lastId(r);
+  if (ticket) await env.OVERHANG.prepare("UPDATE gp_tickets SET state='paid', sale_id=? WHERE id=?").bind(saleId, ticket.id).run();
   const h = await halfBooks(env, f, site.key, halfOf(new Date()));
-  return { ok:true, build: BUILD, id: lastId(r), site: site.key, seller: s.name, price: money(amount),
-    seller_keeps: money(amount - sellerFee(f, delivery || "text")), buyer_paid: money(amount + f.buyer_cents),
+  return { ok:true, build: BUILD, id: saleId, site: site.key, seller: s.name, price: money(amount), kind: eventId ? "ticket" : (q.get("request") ? "request" : "gig"),
+    rail, stripe_fee_absorbed_by_seller: stripeFee ? money(stripeFee) : null,
+    seller_keeps: money(amount - (eventId ? Number(f.ticket_host_cents || 0) * seatsN : sellerFee(f, delivery || "text")) - stripeFee),
+    buyer_paid: money(amount + (eventId ? Number(f.ticket_buyer_cents || 0) * seatsN : f.buyer_cents)),
     this_half: { gross: h.gross, sales: h.sales, gigapoo_is_owed_so_far: h.due + " (" + h.rate + ")" } };
 }
 
@@ -1008,6 +1792,18 @@ async function bill(env, which) {
   }
   return { ok:true, build: BUILD, half: h.half, period: h.from + " to " + h.to, ended, note: ended ? null : "That half has not ended — these are bills on the sales so far.", wrote, skipped };
 }
+/* Gigapoo paid the host (or the seller) for a sale — by ACH through achpay.com */
+async function payout(env, id, ref) {
+  if (!id) return { ok:false, error:"which sale? (&sale=)" };
+  const v = await env.OVERHANG.prepare("SELECT * FROM gp_sales WHERE id = ?").bind(id).first();
+  if (!v) return { ok:false, error:"no such sale" };
+  if (v.state !== "paid" && v.state !== "released") return { ok:false, error:"that sale is " + v.state + " — Gigapoo has not received it yet, so it does not pay it out" };
+  const s = await env.OVERHANG.prepare("SELECT id, name, achpay FROM gp_sellers WHERE id = ?").bind(v.seller_id).first();
+  /* ⚠ PAID BY ACH THROUGH ACHPAY.COM ONLY — no achpay on file, no payout */
+  if (!s || !s.achpay) return { ok:false, error:(s ? s.name : "the seller") + " has no achpay.com address on file — Gigapoo pays only through " + ACH + ". They add it with ?action=bank&token=…&achpay=…", needs_achpay:true };
+  await env.OVERHANG.prepare("UPDATE gp_sales SET host_paid=datetime('now'), host_ref=? WHERE id=?").bind(clean(ref) || null, id).run();
+  return { ok:true, build: BUILD, sale: Number(id), seller: v.seller_id, to: s.achpay, paid_out: money(v.price_cents - v.seller_fee_cents - Number(v.stripe_fee_cents || 0)), stripe_fee_absorbed: Number(v.stripe_fee_cents || 0) ? money(v.stripe_fee_cents) : null, by: ACH, ref: clean(ref) || null };
+}
 async function markPaid(env, id, note) {
   if (!id) return { ok:false, error:"which invoice? (&invoice=)" };
   const v = await env.OVERHANG.prepare("SELECT * FROM gp_invoices WHERE id = ?").bind(id).first();
@@ -1033,6 +1829,8 @@ async function stats(env) {
     requests: await one("SELECT COUNT(*) all_of_them, SUM(CASE WHEN state='open' THEN 1 ELSE 0 END) open FROM gp_requests"),
     bids: await one("SELECT COUNT(*) all_of_them FROM gp_bids"),
     sales: await one("SELECT COUNT(*) all_of_them, SUM(price_cents) gross FROM gp_sales"),
+    events: await one("SELECT COUNT(*) all_of_them, SUM(CASE WHEN starts >= datetime('now') THEN 1 ELSE 0 END) coming FROM gp_events WHERE state='live'"),
+    tickets: await one("SELECT COUNT(*) all_of_them, SUM(CASE WHEN state='paid' THEN seats ELSE 0 END) paid_seats FROM gp_tickets"),
     fees: await fees(env) };
 }
 
@@ -1048,7 +1846,14 @@ function sniff(bytes) {
   if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return { type: "image/webp", ext: "webp" };
   return null;
 }
-async function putPhoto(env, me, req, origin) {
+/* one store for three kinds of picture: a seller's face, an attendee's face,
+   an event's promotional picture. All kept in R2 under gp/, all searchable
+   through the event they belong to. */
+const PIC = { seller: { table: "gp_sellers", prefix: "seller", q: "photo", live: " AND state='verified'" },
+              attendee: { table: "gp_attendees", prefix: "attendee", q: "apic", live: "" },
+              event: { table: "gp_events", prefix: "event", q: "epic", live: "" } };
+async function putPhoto(env, me, req, origin, which) {
+  const p = PIC[which || "seller"];
   if (!env.IMG) return { ok:false, error:"no IMG binding" };
   if (req.method !== "POST" && req.method !== "PUT") return { ok:false, error:"POST the image as the body" };
   const bytes = await req.arrayBuffer();
@@ -1056,14 +1861,15 @@ async function putPhoto(env, me, req, origin) {
   if (bytes.byteLength > PHOTO_MAX) return { ok:false, error:"two megabytes at most" };
   const kind = sniff(bytes);
   if (!kind) return { ok:false, error:"a JPEG, PNG or WebP — read from the file itself, not its name. No SVG, ever." };
-  const key = "gp/seller-" + me.id + "." + kind.ext;
+  const key = "gp/" + p.prefix + "-" + me.id + "." + kind.ext;
   await env.IMG.put(key, bytes, { httpMetadata: { contentType: kind.type } });
-  await env.OVERHANG.prepare("UPDATE gp_sellers SET photo_key=? WHERE id=?").bind(key, me.id).run();
-  return { ok:true, build: BUILD, shows_at: (origin || "") + "/?photo=" + me.id,
-    note:"A picture out of a phone often carries where it was taken. If that matters to you, use one that does not." };
+  await env.OVERHANG.prepare("UPDATE " + p.table + " SET photo_key=? WHERE id=?").bind(key, me.id).run();
+  return { ok:true, build: BUILD, shows_at: (origin || "") + "/?" + p.q + "=" + me.id,
+    note: which === "event" ? "Up — it heads the event and is searchable with it." : "A picture out of a phone often carries where it was taken. If that matters to you, use one that does not." };
 }
-async function servePhoto(env, id) {
-  const s = await env.OVERHANG.prepare("SELECT photo_key FROM gp_sellers WHERE id = ? AND state='verified'").bind(id).first();
+async function servePhoto(env, id, which) {
+  const p = PIC[which || "seller"];
+  const s = await env.OVERHANG.prepare("SELECT photo_key FROM " + p.table + " WHERE id = ?" + p.live).bind(id).first();
   if (!s || !s.photo_key || !env.IMG) return new Response("no photo", { status: 404 });
   const o = await env.IMG.get(s.photo_key);
   if (!o) return new Response("no photo", { status: 404 });

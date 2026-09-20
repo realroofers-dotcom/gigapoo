@@ -1,4 +1,4 @@
-<!-- BUILT 2026-09-20 · gigapoo index-2a · THE MARKET: gigapoo.com is a real marketplace, run on its own engine. -->
+<!-- BUILT 2026-09-20 · gigapoo index-2b · THE MARKET: an event and gig marketplace, all about socialization and community. Nothing is free. -->
 <!--
    HIS BRIEF, 20 Sep 2026: "the gig market for us should look like a real
    marketplace. The ability to add a gig service to their own site should be
@@ -23,15 +23,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Gigapoo — real people, real names, any task</title>
-<meta name="description" content="A gig market where nobody is anonymous. Every seller has a name, a telephone and a location on file, verified by a phone call. Post what you need and get bids, or say what you can do and get paid. Any task except illegal or dangerous.">
+<title>Gigapoo — events and gigs, real people, real names</title>
+<meta name="description" content="An event and gig marketplace about socialization and community, where nobody is anonymous. Meetups, classes, walks and dinners with a price on the door; gigs and jobs from people whose name, telephone and location are on file. Free has no value here.">
 <link rel="canonical" href="https://gigapoo.com/">
 <meta name="author" content="Mark Nejmeh">
 <meta name="robots" content="index, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Gigapoo">
-<meta property="og:title" content="Gigapoo — real people, real names, any task">
-<meta property="og:description" content="A gig market where nobody is anonymous. Post what you need and get bids, or say what you can do and get paid.">
+<meta property="og:title" content="Gigapoo — events and gigs, real people, real names">
+<meta property="og:description" content="An event and gig marketplace about socialization and community. Nobody is anonymous; nothing is free.">
 <meta property="og:url" content="https://gigapoo.com/">
 <style>
 :root{
@@ -87,7 +87,8 @@ p b{color:var(--ink);font-weight:600}
 #gigs{min-height:320px}
 
 /* how it works, both sides */
-.how{padding:30px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.how{padding:30px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+@media(max-width:1000px){.how{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.how{grid-template-columns:1fr}}
 .side{background:var(--sky);border-radius:14px;padding:20px 22px}
 .side .k{display:block;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--orange2);margin:0 0 8px}
@@ -115,6 +116,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-off
 <header class="top">
   <a class="logo" href="/"><span class="m" aria-hidden="true"></span>Gigapoo</a>
   <nav class="nav" aria-label="Site">
+    <a href="#events">Events</a>
     <a href="#offered">Offered</a>
     <a href="#wanted">Wanted</a>
     <a href="#need">I need someone</a>
@@ -126,10 +128,11 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-off
 <!-- ═══ HERO — short; the market below is the page ═══ -->
 <section class="hero">
   <div>
-    <h1>Real people, real names. <em>Any task.</em></h1>
-    <p class="sub">Post what you need and get bids from people whose name, telephone and location are on file. Or say what you can do, set your price, and get paid. Remote or in person. Nobody here is anonymous.</p>
+    <h1>Events and gigs. Real people, real names. <em>Nothing free.</em></h1>
+    <p class="sub">A marketplace about socialization and community. Meetups, classes, walks and dinners held by named people, with a price on the door. Gigs and jobs from people whose name, telephone and location are on file. Nobody here is anonymous, and nothing here is free &mdash; free costs everyone time and problems.</p>
     <div class="btns">
-      <a class="btn go" href="#need">I need someone &rarr;</a>
+      <a class="btn go" href="#events">What is on &rarr;</a>
+      <a class="btn ghost" href="#need">I need someone</a>
       <a class="btn ghost" href="#sell">I can do something</a>
     </div>
   </div>
@@ -139,7 +142,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-off
       <li>Every seller was <b>telephoned</b> before their first listing.</li>
       <li>Name, telephone and <b>location on file</b> &mdash; nomads welcome, with location on.</li>
       <li>Flat fees, never a cut of the price. The seller&rsquo;s price is the seller&rsquo;s.</li>
-      <li>Money is held until the work is done. <span class="c">Nothing is deleted</span> &mdash; the record is the asset.</li>
+      <li>Every event costs at least <b>$5</b>. You register with a picture; the host decides who is in. <span class="c">Free has no value here.</span></li>
+      <li>Money is held until the work is done. Nothing is deleted &mdash; the record is the asset.</li>
     </ul>
   </div>
 </section>
@@ -152,15 +156,25 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-off
 
 <!-- ═══ HOW IT WORKS, BOTH SIDES ═══ -->
 <div class="how">
+  <div class="side" style="background:var(--yellow2)">
+    <span class="k">If you hold or go to events</span>
+    <h3>A meetup with a price on the door, and faces at it.</h3>
+    <ol>
+      <li>A verified host puts it on: what, when, where (a map and directions are made), a limit if needed, a picture, and a price &mdash; <b>$5 at least</b>.</li>
+      <li>To come, register once with Gigapoo &mdash; name, telephone, email, hometown, where you are now, and your picture &mdash; and <b>agree to pay</b>. The host sees it all and lets you in, or not, or bars you.</li>
+      <li>Approval opens your credit line. You pay Gigapoo by ACH through achpay.com &mdash; no interest &mdash; and Gigapoo pays the host. Who is coming is shown on the event.</li>
+    </ol>
+    <p class="fee">Search by type &mdash; walk, talk, dinner, chess &mdash; or on the map. Every event is archived and can be copied by its host or anyone. Hosts, attendees, gig workers and the people who hire them are all reviewed: 140 characters, as written.</p>
+  </div>
   <div class="side">
     <span class="k">If you need someone</span>
     <h3>Post it, read the bids, pick a name.</h3>
     <ol>
       <li>Say what you need, where (remote or at your place), and what you would pay.</li>
       <li>Verified sellers bid. You see their name, their town, their ratings, their dated work.</li>
-      <li>Pay Gigapoo; we hold it. Two days after delivery it goes to the seller.</li>
+      <li>Pay Gigapoo by card, up front; we hold it. Two days after delivery it goes to the seller by ACH. <b>Credit lines are for events only.</b></li>
     </ol>
-    <p class="fee">Your side of the fee is flat: <b id="fee-buyer">$10</b> on a sale. Work at your address needs your name and telephone too &mdash; the same rule both ways.</p>
+    <p class="fee">Your side of the fee is flat: <b id="fee-buyer">$10</b> on a sale. Work at your address needs your name and telephone too &mdash; the same rule both ways. Tick &ldquo;anyone could do this&rdquo; when no particular skill is needed.</p>
   </div>
   <div class="side">
     <span class="k">If you can do something</span>
@@ -168,9 +182,9 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-off
     <ol>
       <li>Your name, telephone, a photo, where you are. Nomad? Keep location on.</li>
       <li>A person telephones you. After that, you can list and bid on every site the engine runs.</li>
-      <li>Your price is paid in full to you; the buyer pays the flat fee on top.</li>
+      <li>Your price is paid to you by ACH through achpay.com &mdash; put your achpay address on file, or you cannot be paid. The buyer pays the flat fee on top; on a card-paid gig, Stripe&rsquo;s fee comes off your side.</li>
     </ol>
-    <p class="fee">Your side of the fee is flat: <b id="fee-seller">$25</b> on a written job, more for voice or a licensed opinion. Never a percentage.</p>
+    <p class="fee">Your side of the fee is flat: <b id="fee-seller">$25</b> on a written job, more for voice or a licensed opinion. Never a percentage. Find work near you on the map, and hear of new requests in the area you watch.</p>
   </div>
 </div>
 
@@ -178,7 +192,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-off
 <div class="rules">
   <div class="rule"><b>Nobody is anonymous.</b><span>Sellers and in-place buyers: real name, real telephone, a location, a call. Enforced by the engine, not written on a page.</span></div>
   <div class="rule"><b>You say what you can do.</b><span>No list of categories. Sellers describe the work in their own words at their own price; the market groups what people offer.</span></div>
-  <div class="rule red"><b>Any task except illegal or dangerous.</b><span>A short published refusal list. Everything else is allowed. Flags are reviewed; posts are not pre-screened.</span></div>
+  <div class="rule red"><b>Free has no value here.</b><span>Every gig, job and event carries a price. Free costs everyone time and problems; a price on the door is the first filter and the best one.</span></div>
+  <div class="rule"><b>Any task, any event, except illegal or dangerous.</b><span>A short published refusal list. Everything else is allowed. Flags are reviewed; posts are not pre-screened.</span></div>
   <div class="rule"><b>Opinion is not advice.</b><span>Work is a named person&rsquo;s opinion unless the seller holds a licence on file &mdash; then, and only then, it may be marked advice.</span></div>
   <div class="rule"><b>Money is held.</b><span>The buyer pays Gigapoo. Two days after delivery, the seller is paid. In-place work: the address is confirmed and both sides can see the meeting record.</span></div>
   <div class="rule"><b>Nothing is deleted.</b><span>Work, ratings and disputes are dated and kept. A revision gets a new date under the old one.</span></div>
@@ -186,8 +201,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-off
 
 <footer>
   A seller&rsquo;s work is that seller&rsquo;s opinion, published under their name, and is not advice unless marked so by a licensed professional on file. The telephone and the exact position of a seller are never published. Nothing here alleges that anyone broke any law.<br>
-  Built and run by <a href="https://warrantwire.com/about">Mark Nejmeh</a> &middot; <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/yoursite">Run this market on your own site</a> &middot; <a href="/api">API</a>
-  <p class="stamp">Built 2026-09-20 &middot; gigapoo index-2a</p>
+  <b>Gigapoo &middot; <a href="tel:+17025442002">702-544-2002</a></b> &middot; a person answers. Built and run by <a href="https://warrantwire.com/about">Mark Nejmeh</a> &middot; <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/yoursite">Run this market on your own site</a> &middot; <a href="/api">API</a>
+  <p class="stamp">Built 2026-09-20 &middot; gigapoo index-2b</p>
 </footer>
 </div>
 
