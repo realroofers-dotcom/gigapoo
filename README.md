@@ -1,6 +1,10 @@
 # gigapoo.com
 
-**Gigapoo is a gig market, and the engine under it.** gigapoo.com is a real marketplace — verified people offering work, people asking for it, payment and payout handled, nobody anonymous. The same engine runs on any other website that pastes two lines; that site brings its own people, pays a yearly fee, and keeps a share of the flat fees on every sale, paid each quarter.
+**Gigapoo is a gig market, and the engine under it.** gigapoo.com is a real marketplace — verified people offering work, people asking for it, payment and payout handled, nobody anonymous. The same engine runs on any other website that pastes two lines; that site brings its own people and says what its market is for.
+
+**The terms (20 Sep 2026):** nothing up front. The engine keeps every site's books (`gp_sales`). Every six months (`?action=bill`) it invoices each site 10% of the half-year's sales, or 5% once the half passes $1,000; due in 30 days; an invoice 180 days unpaid switches that site's market off (`gate()`) until `?action=paid`. `?action=books` is the house's view of every site. No yearly fee, no share back.
+
+**Purpose per site:** `gp_sites.purpose / blurb / kinds / min_age / audience`. Warrant Wire and 8K10Q: readers and audio opinions on finance, text/voice/own, 18+. gigapoo.com: youth, seniors, everyone (under 18 with a guardian on file). The embed reads `?site=key` and dresses for it; the engine enforces it. Set with `?action=purpose`.
 
 Built by Mark Nejmeh. Built 2026-09-18; the market home 2026-09-20.
 

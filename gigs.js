@@ -1,4 +1,8 @@
-/* BUILT 2026-09-20 · gigapoo gigs.js 1b (1b: #sell/#need/#wanted in the URL and gigapoo.open() open a door)
+/* BUILT 2026-09-20 · gigapoo gigs.js 1c
+   (1b: #sell/#need/#wanted in the URL and gigapoo.open() open a door;
+    1c: reads the site's purpose first — its headline, the kinds of work it
+    takes, its age floor; date of birth on the sell form, a guardian under 18,
+    an 18+ box for buyers on adult sites; a paused site draws one notice)
    ============================================================================
    THE EMBED. One line on any site puts the gig market on it:
 
@@ -98,10 +102,35 @@
   var style = document.createElement("style"); style.textContent = CSS; document.head.appendChild(style);
   root.className = (root.className ? root.className + " " : "") + "gp";
 
+  /* ---- the site's purpose, read first --------------------------------------
+     Each site's market is for something: Warrant Wire and 8K10Q want readers
+     and audio opinions on finance, 18 and older; gigapoo.com is for youth,
+     seniors and everyone. The engine tells us; we dress for it and the forms
+     only offer what the site takes. A paused site (its bill to Gigapoo more
+     than 180 days unpaid) draws one notice and no doors. */
+  var SI = { min_age: 0, kinds: ["text", "voice", "own", "file", "in_person"], purpose: null, blurb: null, name: null };
+  var KIND_NAME = { text: "written", voice: "written + a machine voice", own: "written + my own voice", file: "a file", in_person: "in person" };
+  function kindOptions(sel) { return SI.kinds.map(function (k) { return '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + KIND_NAME[k] + '</option>'; }).join(""); }
+  function adult() { return SI.min_age >= 18; }
+
+  root.innerHTML = '<div class="empty">Opening the market…</div>';
+  get(API + "/?site=" + encodeURIComponent(SITE)).then(function (d) {
+    if (d && d.paused) {
+      root.innerHTML = '<div class="warn"><b>This market is paused.</b> ' + esc(d.why || d.error || "") + '</div><p class="foot">Run by <a href="https://gigapoo.com" target="_blank" rel="noopener">Gigapoo</a>.</p>';
+      return;
+    }
+    if (d && d.ok) SI = { min_age: Number(d.min_age) || 0, kinds: (d.kinds && d.kinds.length) ? d.kinds : SI.kinds, purpose: d.purpose, blurb: d.blurb, name: d.name, rule: d.rule };
+    frame();
+  }).catch(function () { frame(); });
+
+  var pane;
+  function frame() {
   /* ---- the frame ---------------------------------------------------------- */
+  var head = SI.purpose ? '<b>' + esc(SI.purpose) + (adult() ? ' · ' + SI.min_age + ' and older' : '') + '</b><span>' + esc(SI.blurb || "") + ' ' + esc(SI.rule || "Every seller here has a name, a telephone and a location on file, verified by a telephone call.") + ' Nobody is anonymous.</span>'
+                        : '<b>Real people, real names.</b><span>Every seller here has a name, a telephone and a location on file, and was verified by a telephone call before the first listing. Buyers of in-place work are verified the same way. Nobody is anonymous.</span>';
   root.innerHTML = ''
     + '<div class="trust"><div class="shield"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>'
-    + '<div><b>Real people, real names.</b><span>Every seller here has a name, a telephone and a location on file, and was verified by a telephone call before the first listing. Buyers of in-place work are verified the same way. Nobody is anonymous.</span></div></div>'
+    + '<div>' + head + '</div></div>'
     + '<div class="doors">'
     + '<button class="door on" data-door="offered"><b>Offered</b><span>what people here can do</span></button>'
     + '<button class="door" data-door="wanted"><b>Wanted</b><span>what people need done</span></button>'
@@ -110,7 +139,7 @@
     + '</div>'
     + '<div class="pane"></div>'
     + '<p class="foot">Run by <a href="https://gigapoo.com" target="_blank" rel="noopener">Gigapoo</a> — the same rules on every site that carries it. Opinions, not advice, unless the seller holds a licence on file.</p>';
-  var pane = root.querySelector(".pane");
+  pane = root.querySelector(".pane");
   root.querySelectorAll(".door").forEach(function (b) {
     b.addEventListener("click", function () {
       root.querySelectorAll(".door").forEach(function (x) { x.classList.remove("on"); });
@@ -182,7 +211,7 @@
   function bidForm(rid, subject) {
     pane.innerHTML = '<form><div class="rule"><b>Your bid on:</b> ' + esc(subject) + '</div>'
       + '<div class="f2"><div><label for="gp-bid-price">Your price, in dollars</label><input id="gp-bid-price" type="number" min="1" step="1" placeholder="150"></div>'
-      + '<div><label for="gp-bid-delivery">Delivered as</label><select id="gp-bid-delivery"><option value="text">written</option><option value="voice">written + a machine voice</option><option value="own">written + my own voice</option><option value="file">a file</option><option value="in_person">in person</option></select></div></div>'
+      + '<div><label for="gp-bid-delivery">Delivered as</label><select id="gp-bid-delivery">' + kindOptions("text") + '</select></div></div>'
       + '<div><label for="gp-bid-note">A line to the buyer</label><input id="gp-bid-note" placeholder="what you will do and when"></div>'
       + '<div class="row"><span class="hint">A flat fee comes off your price — the form shows what you keep once you bid.</span><button class="btn" type="submit">Send the bid</button></div><div class="msg"></div></form>';
     var f = pane.querySelector("form"), msg = f.querySelector(".msg");
@@ -205,6 +234,7 @@
       + '<div class="f2"><div><label for="gp-need-where">Where the work happens</label><select id="gp-need-where"><option value="remote"' + (inPlace ? '' : ' selected') + '>remote — over the wire</option><option value="in_place"' + (inPlace ? ' selected' : '') + '>in person — at an address</option></select></div>'
       + '<div><label for="gp-need-budget">Budget, in dollars (optional)</label><input id="gp-need-budget" type="number" min="1" step="1"></div></div>'
       + '<div class="place f2" style="' + (inPlace ? '' : 'display:none') + '"><div><label for="gp-need-phone">Telephone</label><input id="gp-need-phone" type="tel" autocomplete="tel"></div><div><label for="gp-need-city">City and country</label><input id="gp-need-city" placeholder="Clifton, USA"></div></div>'
+      + (adult() ? '<div class="check"><input id="gp-need-adult" type="checkbox"><label for="gp-need-adult" style="text-transform:none;letter-spacing:0;font:14px var(--gp-sans);color:var(--gp-ink2)"><b>I am ' + SI.min_age + ' or older.</b> ' + esc(SI.name || "This market") + ' is for adults.</label></div>' : '')
       + '<div class="row"><span class="hint">Nothing is owed. Bids come to your email; you pick one or none.</span><button class="btn" type="submit">Post it</button></div><div class="msg"></div></form>';
     var f = pane.querySelector("form"), msg = f.querySelector(".msg"), wsel = f.querySelector("#gp-need-where"), place = f.querySelector(".place");
     wsel.addEventListener("change", function () { place.style.display = wsel.value === "in_place" ? "" : "none"; });
@@ -213,7 +243,8 @@
       var cc = (f.querySelector("#gp-need-city").value || "").split(","), city = (cc[0] || "").trim(), country = (cc[1] || "").trim();
       get(API + "/?" + q({ action: "want", site: SITE, subject: f.querySelector("#gp-need-subject").value, note: f.querySelector("#gp-need-note").value,
           name: f.querySelector("#gp-need-name").value, email: f.querySelector("#gp-need-email").value, where: wsel.value, budget: f.querySelector("#gp-need-budget").value,
-          phone: f.querySelector("#gp-need-phone").value, city: city, country: country }))
+          phone: f.querySelector("#gp-need-phone").value, city: city, country: country,
+          adult: (f.querySelector("#gp-need-adult") && f.querySelector("#gp-need-adult").checked) ? 1 : 0 }))
         .then(function (d) { msg.innerHTML = d.ok ? '<div class="done"><b>Posted.</b> ' + esc(d.note) + '</div>' : '<div class="warn"><b>Not yet:</b> ' + esc((d.missing || [d.error]).join(" · ")) + '</div>'; })
         .catch(function () { msg.innerHTML = '<div class="warn">Could not reach the market.</div>'; });
     });
@@ -224,9 +255,13 @@
     var tok = token();
     if (tok) return mine(tok);
     pane.innerHTML = '<form>'
-      + '<div class="rule"><b>The rule, before the form.</b> Nobody sells here anonymously: a real name, a telephone, and where you are. A person telephones you before your first listing shows. No fixed address? Fine — keep location sharing on, and check in every month.</div>'
+      + '<div class="rule"><b>The rule, before the form.</b> Nobody sells here anonymously: a real name, a telephone, a date of birth, and where you are. A person telephones you before your first listing shows. No fixed address? Fine — keep location sharing on, and check in every month.'
+      + (adult() ? ' <b>' + esc(SI.name || "This market") + ' is for sellers ' + SI.min_age + ' and older.</b>' : ' <b>Under 18?</b> A parent or guardian goes on file with you, and we call them too.') + '</div>'
+      + (SI.purpose ? '<div class="rule" style="background:var(--gp-sky2);border-color:var(--gp-line);color:var(--gp-ink2)"><b>What this market is for:</b> ' + esc(SI.purpose) + '. It takes ' + SI.kinds.map(function (k) { return KIND_NAME[k]; }).join(", ") + '.</div>' : '')
       + '<div class="f2"><div><label for="gp-s-name">Full name, first and last</label><input id="gp-s-name" autocomplete="name"></div><div><label for="gp-s-email">Email</label><input id="gp-s-email" type="email" autocomplete="email"></div></div>'
-      + '<div class="f2"><div><label for="gp-s-phone">Telephone — we call it</label><input id="gp-s-phone" type="tel" autocomplete="tel"></div><div><label for="gp-s-cred">Licence or credential, if any</label><input id="gp-s-cred" placeholder="CRD, bar number, press card…"><p class="hint">Only a seller with one on file may mark work as advice.</p></div></div>'
+      + '<div class="f2"><div><label for="gp-s-phone">Telephone — we call it</label><input id="gp-s-phone" type="tel" autocomplete="tel"></div><div><label for="gp-s-born">Date of birth — never published</label><input id="gp-s-born" type="date" autocomplete="bday"></div></div>'
+      + '<div class="guardian f2" style="display:none"><div><label for="gp-s-gname">Parent or guardian, full name</label><input id="gp-s-gname"></div><div><label for="gp-s-gphone">Their telephone — we call them too</label><input id="gp-s-gphone" type="tel"></div></div>'
+      + '<div><label for="gp-s-cred">Licence or credential, if any</label><input id="gp-s-cred" placeholder="CRD, bar number, press card…"><p class="hint">Only a seller with one on file may mark work as advice.</p></div>'
       + '<div class="f2"><div><label for="gp-s-city">City</label><input id="gp-s-city" autocomplete="address-level2"></div><div><label for="gp-s-country">Country</label><input id="gp-s-country" autocomplete="country-name" placeholder="USA"></div></div>'
       + '<div class="check"><input id="gp-s-nomad" type="checkbox"><label for="gp-s-nomad" style="text-transform:none;letter-spacing:0;font:14px var(--gp-sans);color:var(--gp-ink2)"><b>I move around — no fixed address.</b> I will keep my location on and check in monthly.</label></div>'
       + '<div class="row"><button class="btn quiet" type="button" id="gp-s-locate">Use my location</button><span class="hint" id="gp-s-locmsg">Optional for a fixed address; required if you move around. The exact point is never published — only your city and country.</span></div>'
@@ -234,9 +269,13 @@
       + '<div class="rule" style="background:var(--gp-sky2);border-color:var(--gp-line);color:var(--gp-ink2)"><b>What you can do</b> — your first offer, in your own words. You can add more once you are verified.</div>'
       + '<div><label for="gp-s-title">The task</label><input id="gp-s-title" placeholder="I will read your company&rsquo;s warrant agreement and tell you what it permits"></div>'
       + '<div class="f2"><div><label for="gp-s-price">Your price, in dollars</label><input id="gp-s-price" type="number" min="1" step="1" placeholder="150"></div><div><label for="gp-s-where">Where</label><select id="gp-s-where"><option value="remote">remote — over the wire</option><option value="in_place">in person — at the buyer&rsquo;s address</option></select></div></div>'
-      + '<div class="f2"><div><label for="gp-s-delivery">Delivered as</label><select id="gp-s-delivery"><option value="text">written</option><option value="voice">written + a machine voice</option><option value="own">written + my own voice</option><option value="file">a file</option><option value="in_person">in person</option></select></div><div><label for="gp-s-days">Turnaround, days</label><input id="gp-s-days" type="number" min="0" step="1" placeholder="2"></div></div>'
+      + '<div class="f2"><div><label for="gp-s-delivery">Delivered as</label><select id="gp-s-delivery">' + kindOptions("text") + '</select></div><div><label for="gp-s-days">Turnaround, days</label><input id="gp-s-days" type="number" min="0" step="1" placeholder="2"></div></div>'
       + '<div class="row"><span class="hint">A flat fee comes off each sale — never a percentage. Already verified? <a href="#" id="gp-s-havetoken">Paste your token</a>.</span><button class="btn" type="submit">Apply to sell</button></div><div class="msg"></div></form>';
     var f = pane.querySelector("form"), msg = f.querySelector(".msg"), pos = { lat: null, lng: null };
+    /* under 18: the guardian fields appear as soon as the date says so */
+    var bornIn = f.querySelector("#gp-s-born"), guard = f.querySelector(".guardian");
+    function ageNow() { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(bornIn.value || ""); if (!m) return null; var n = new Date(), a = n.getFullYear() - +m[1]; if (n.getMonth() + 1 < +m[2] || (n.getMonth() + 1 === +m[2] && n.getDate() < +m[3])) a--; return a; }
+    bornIn.addEventListener("change", function () { var a = ageNow(); guard.style.display = (a != null && a < 18 && !adult()) ? "" : "none"; });
     f.querySelector("#gp-s-locate").addEventListener("click", function () {
       var m = f.querySelector("#gp-s-locmsg");
       if (!navigator.geolocation) { m.textContent = "This browser cannot share a location. Type your city and country."; return; }
@@ -250,6 +289,7 @@
       var nomad = f.querySelector("#gp-s-nomad").checked;
       var d = { action: "join", site: SITE, name: f.querySelector("#gp-s-name").value, email: f.querySelector("#gp-s-email").value, phone: f.querySelector("#gp-s-phone").value,
         credential: f.querySelector("#gp-s-cred").value, city: f.querySelector("#gp-s-city").value, country: f.querySelector("#gp-s-country").value,
+        born: bornIn.value, guardian_name: f.querySelector("#gp-s-gname").value, guardian_phone: f.querySelector("#gp-s-gphone").value,
         nomad: nomad ? 1 : 0, location_on: (nomad || pos.lat != null) ? 1 : 0, lat: pos.lat, lng: pos.lng, about: f.querySelector("#gp-s-about").value };
       /* the first offer travels with the application; the engine stores it the moment the token is issued */
       var first = { title: f.querySelector("#gp-s-title").value, price: f.querySelector("#gp-s-price").value, where: f.querySelector("#gp-s-where").value, delivery: f.querySelector("#gp-s-delivery").value, days: f.querySelector("#gp-s-days").value };
@@ -275,7 +315,7 @@
         + '<div><label for="gp-o-title">The task</label><input id="gp-o-title" value="' + esc(first ? first.title : "") + '"></div>'
         + '<div><label for="gp-o-blurb">A line or two more (optional)</label><input id="gp-o-blurb"></div>'
         + '<div class="f2"><div><label for="gp-o-price">Price, dollars</label><input id="gp-o-price" type="number" min="1" step="1" value="' + esc(first ? first.price : "") + '"></div><div><label for="gp-o-where">Where</label><select id="gp-o-where"><option value="remote"' + (first && first.where === "in_place" ? '' : ' selected') + '>remote</option><option value="in_place"' + (first && first.where === "in_place" ? ' selected' : '') + '>in person</option></select></div></div>'
-        + '<div class="f2"><div><label for="gp-o-delivery">Delivered as</label><select id="gp-o-delivery"><option value="text">written</option><option value="voice">written + machine voice</option><option value="own">written + my own voice</option><option value="file">a file</option><option value="in_person">in person</option></select></div><div><label for="gp-o-days">Turnaround, days</label><input id="gp-o-days" type="number" min="0" step="1" value="' + esc(first ? first.days : "") + '"></div></div>'
+        + '<div class="f2"><div><label for="gp-o-delivery">Delivered as</label><select id="gp-o-delivery">' + kindOptions(first && SI.kinds.indexOf(first.delivery) > -1 ? first.delivery : "text") + '</select></div><div><label for="gp-o-days">Turnaround, days</label><input id="gp-o-days" type="number" min="0" step="1" value="' + esc(first ? first.days : "") + '"></div></div>'
         + '<div class="check"><input id="gp-o-advice" type="checkbox"' + (you.credential ? '' : ' disabled') + '><label for="gp-o-advice" style="text-transform:none;letter-spacing:0;font:14px var(--gp-sans);color:var(--gp-ink2)">Mark as <b>advice</b>' + (you.credential ? ' — under my credential on file' : ' — needs a licence on file; everything else is an opinion') + '</label></div>'
         + '<div class="row"><span class="hint"></span><button class="btn" type="submit">Put it up</button></div><div class="msg"></div></form>'
         + (d.offers && d.offers.length ? '<div class="rule" style="background:var(--gp-paper)"><b>Your offers:</b> ' + d.offers.map(function (o) { return esc(o.title) + ' (' + esc(o.price) + ')'; }).join(' · ') + '</div>' : '')
@@ -303,5 +343,6 @@
 
   var first = location.hash.slice(1);
   if (DOORS.indexOf(first) > -1 && first !== "offered") { pick(first); show(first); } else offered();
+  } /* frame */
   } /* boot */
 })();
