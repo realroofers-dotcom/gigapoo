@@ -312,7 +312,7 @@ const HOUSE_SITES = [
      events, just wisesleuth." */
   { key: "wisesleuth", name: "Wise Sleuth", domain: "wisesleuth.com", min_age: 18, kinds: "text,voice,own,file,in_person",
     purpose: "A research club — gig work for seniors and for people coming out of prison", audience: "seniors, ex-offenders, and anyone who likes to dig",
-    blurb: "Research gigs done by named people who dig — a company, a claim, a family history, a property, a public record — and the club's meetups to do it together. Built for people with time and patience who need honest work under their own name: senior citizens, and people who have done their time. Nobody is anonymous." },
+    blurb: "Wise people who dig — a company, a claim, a family history, a property, a public record — paid, under their own name. Seniors, and people who have done their time." },
   { key: "gigapoo", name: "Gigapoo", domain: "gigapoo.com", min_age: 0, kinds: "",
     purpose: "Opportunities for youth, seniors and everyone", audience: "youth, seniors, everyone",
     blurb: "Any task except illegal or dangerous, remote or in person. Under 18? A parent or guardian goes on file with you." }

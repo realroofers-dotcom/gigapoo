@@ -1,6 +1,6 @@
 # gigapoo.com
 
-**Gigapoo is a gig market, and the engine under it.** gigapoo.com is a real marketplace — verified people offering work, people asking for it, payment and payout handled, nobody anonymous. The same engine runs on any other website that pastes two lines; that site brings its own people and says what its market is for.
+**Gigapoo is a gig market, and the engine under it.** The name: Peaches, part poodle — one smart poodle, a talented mix, with a mix of people she knows (`peaches.svg`, beside the name on every page). Gig + poo(dle); nothing to do with the other thing. gigapoo.com is a real marketplace — verified people offering work, people asking for it, payment and payout handled, nobody anonymous. The same engine runs on any other website that pastes two lines; that site brings its own people and says what its market is for.
 
 **The terms (20 Sep 2026):** nothing up front. The engine keeps every site's books (`gp_sales`). Every six months (`?action=bill`) it invoices each site 10% of the half-year's sales, or 5% once the half passes $1,000; due in 30 days; an invoice 180 days unpaid switches that site's market off (`gate()`) until `?action=paid`. `?action=books` is the house's view of every site. No yearly fee, no share back.
 

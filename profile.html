@@ -25,7 +25,7 @@
 body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 var(--sans)}
 .wrap{max-width:900px;margin:0 auto;padding:0 20px}
 header{padding:16px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.logo{font:800 24px var(--sans);letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.logo{font:800 24px var(--sans);letter-spacing:-.02em;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:8px}.logo .m{width:36px;height:36px;display:block}
 .logo i{font-style:normal;color:var(--orange)}
 header a.back{font:600 14px var(--sans);color:var(--ink2);text-decoration:none}
 .card{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:26px 0 18px;align-items:start}
@@ -64,7 +64,7 @@ footer a{color:var(--ink2)}
 <body>
 <div class="wrap">
 <header>
-  <a class="logo" href="https://gigapoo.com/">Giga<i>poo</i></a>
+  <a class="logo" href="https://gigapoo.com/"><img class="m" src="https://gigapoo.com/peaches.svg" alt="Peaches, part poodle" width="40" height="40" title="Peaches: one smart poodle, part poodle, with a mix of people she knows. Gigapoo is named for her.">Giga<i>poo</i></a>
   <a class="back" href="javascript:history.length>1?history.back():location.assign('https://gigapoo.com/')">&larr; Back to the market</a>
 </header>
 <div id="page"><p class="empty" style="padding:30px 0">Opening the profile&hellip;</p></div>

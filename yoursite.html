@@ -71,8 +71,8 @@ code,.code{font-family:var(--mono)}
 /* masthead */
 .top{padding:22px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .logo{font:800 26px var(--disp);letter-spacing:-.03em;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:9px}
-.logo .m{width:30px;height:30px;border-radius:9px;background:var(--go);position:relative;flex:0 0 30px}
-.logo .m::after{content:"";position:absolute;left:8px;top:8px;width:14px;height:14px;border-radius:4px;background:var(--panel)}
+.logo .m{width:40px;height:40px;flex:0 0 40px;display:block}
+
 .topnav{display:flex;gap:4px;flex-wrap:wrap}
 .topnav a{font:600 14px var(--body);color:var(--ink2);text-decoration:none;padding:8px 12px;border-radius:8px}
 .topnav a:hover{background:var(--panel2);color:var(--ink)}
@@ -219,7 +219,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--go);outline-offset:
 
 <div class="wrap">
 <header class="top">
-  <a class="logo" href="/"><span class="m" aria-hidden="true"></span>Gigapoo</a>
+  <a class="logo" href="/"><img class="m" src="/peaches.svg" alt="Peaches, part poodle" width="40" height="40" title="Peaches: one smart poodle, part poodle, with a mix of people she knows. Gigapoo is named for her.">Gigapoo</a>
   <nav class="topnav" aria-label="Site">
     <a href="/">&larr; The market</a>
     <a href="#how">How it works</a>
