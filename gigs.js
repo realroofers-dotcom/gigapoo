@@ -1,4 +1,4 @@
-/* BUILT 2026-09-21 · gigapoo gigs.js 1h (1h: Stripe wherever money moves — an approved ticket paid now by card, a bid taken by paying it; 1g: Buy by card on every offer through the pay desk — Stripe on everything; 1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
+/* BUILT 2026-09-21 · gigapoo gigs.js 1i (1i: why a seller is good at this — detective, ex-con, wisdom, records, mystery reader, seen it all — asked at join and on the desk, shown on the card; 1h: Stripe wherever money moves — an approved ticket paid now by card, a bid taken by paying it; 1g: Buy by card on every offer through the pay desk — Stripe on everything; 1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
    BUILT 2026-09-20 · gigapoo gigs.js 1d
    (1d: a fifth door, Events — paid events held by verified sellers, tickets
     reserved by named people with a telephone; a job option on "I need
@@ -73,6 +73,7 @@
     + '.gp .stars{font-size:12.5px;color:var(--gp-ink3)}'
     + '.gp .title{font:600 16px/1.35 var(--gp-sans);color:var(--gp-ink);margin:4px 0 2px}.gp .blurb{font-size:14px;color:var(--gp-ink2);margin:0 0 6px}'
     + '.gp .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--gp-ink3)}'
+    + '.gp .why{grid-column:1/-1;margin:2px 0 0;font:15px/1.45 var(--gp-sans);color:var(--gp-ink2)}.gp .why b{color:var(--gp-ink)}'
     + '.gp .pill{border-radius:999px;padding:2px 9px;background:var(--gp-sky2);color:var(--gp-ink2);font-weight:600}.gp .pill.place{background:var(--gp-yellow2);color:#7a5a00}'
     + '.gp .price{font:700 18px var(--gp-sans);color:var(--gp-ink)}.gp .price small{font:400 12px var(--gp-sans);color:var(--gp-ink3)}'
     + '.gp .row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}'
@@ -134,7 +135,7 @@
       root.innerHTML = '<div class="warn"><b>This market is paused.</b> ' + esc(d.why || d.error || "") + '</div><p class="foot">Run by <a href="https://gigapoo.com" target="_blank" rel="noopener">Gigapoo</a>.</p>';
       return;
     }
-    if (d && d.ok) SI = { min_age: Number(d.min_age) || 0, kinds: (d.kinds && d.kinds.length) ? d.kinds : SI.kinds, purpose: d.purpose, blurb: d.blurb, name: d.name, rule: d.rule };
+    if (d && d.ok) SI = { min_age: Number(d.min_age) || 0, kinds: (d.kinds && d.kinds.length) ? d.kinds : SI.kinds, purpose: d.purpose, blurb: d.blurb, name: d.name, rule: d.rule, why_kinds: d.why_kinds || null, why_max: Number(d.why_max) || 400 };
     frame();
   }).catch(function () { frame(); });
 
@@ -174,7 +175,7 @@
   /* a host page's own links can open a door: <a href="#sell">, or
      gigapoo.open("need"). gigapoo.com's header uses both. */
   var DOORS = ["offered", "wanted", "events", "need", "sell"];
-  function openDoor(door) { if (DOORS.indexOf(door) < 0) return; pick(door); show(door); root.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  function openDoor(door, extra) { if (DOORS.indexOf(door) < 0) return; pick(door); show(door, extra); root.scrollIntoView({ block: "start", behavior: "smooth" }); }
   window.gigapoo = window.gigapoo || {}; window.gigapoo.open = openDoor;
   window.addEventListener("hashchange", function () { openDoor(location.hash.slice(1)); });
 
@@ -184,7 +185,23 @@
     return '<div class="face">' + (by.photo ? '<img src="' + esc(by.photo) + '" alt="">' : esc(initials(by.name))) + '</div>'
       + '<div><div class="who"><b><a href="' + PROFILE + esc(by.id) + '" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--gp-ink3)">' + esc(by.name) + '</a></b><span class="loc">' + esc(by.city || loc.city) + ', ' + esc(by.country || loc.country) + '</span>'
       + '<span class="ok' + (loc.stale ? ' stale' : '') + '">' + (loc.stale ? 'location not confirmed' : (loc.nomad ? 'on the move · location on' : 'verified')) + '</span>'
-      + (by.credential ? '<span class="pill">' + esc(by.credential) + '</span>' : '') + '</div>' + stars(by);
+      + (by.credential ? '<span class="pill">' + esc(by.credential) + '</span>' : '') + '</div>' + stars(by)
+      + whyLine(by);
+  }
+  /* why they are good at this — the kind they picked and their own words (1i) */
+  /* the question every seller answers — his words, 21 Sep: "why they are a good
+     sleuth: detective, ex-con, wisdom? mystery readers who have gained knowledge;
+     those that have seen it all." The kinds come from the engine (?site=). */
+  function whyFields(pfx) {
+    var kinds = SI.why_kinds || { detective: "Detective or investigator", excon: "Ex-convict", wisdom: "Wisdom", records: "Records", reader: "Mystery reader", seenitall: "Seen it all", other: "Something else" };
+    var opts = '<option value="">choose one</option>' + Object.keys(kinds).map(function (k) { return '<option value="' + k + '">' + esc(kinds[k]) + '</option>'; }).join("");
+    return '<div class="rule" style="background:var(--gp-yellow2,#fff3c4);border-color:#f0d98a;color:#5a4300"><b>Why are you good at this?</b> A detective, an ex-con, decades of wisdom, a mystery reader who learned how it is done, someone who has seen it all &mdash; say which, and say why in your own words. It goes on your card and your profile, as written.</div>'
+      + '<div class="f2"><div><label for="gp-' + pfx + '-whykind">Which are you?</label><select id="gp-' + pfx + '-whykind">' + opts + '</select></div>'
+      + '<div><label for="gp-' + pfx + '-why">Why, in your own words</label><textarea id="gp-' + pfx + '-why" rows="3" maxlength="' + (SI.why_max || 400) + '" placeholder="Thirty years in claims; I can smell a made-up date. / Did six years; I know exactly how the paper gets moved. / I have read every Christie twice."></textarea></div></div>';
+  }
+  function whyLine(by) {
+    if (!by.why_label && !by.why) return '';
+    return '<p class="why">' + (by.why_label ? '<b>' + esc(String(by.why_label).split(' — ')[0]) + '.</b> ' : '') + (by.why ? esc(by.why) : '') + '</p>';
   }
   function offered() {
     pane.innerHTML = '<div class="empty">Loading what people here can do…</div>';
@@ -475,10 +492,18 @@
   }
 
   /* ---- request a sleuth: the scenario ---------------------------------------- */
+  /* what a scenario can be about — his list, 21 Sep: company investigations;
+     marriage and dating; gaslighting; is the boss fair; the social club, why
+     was I not invited; will the coach play me; will I get the part; should I
+     stay with this team; is NYC for me, where should I live; is that group a
+     syndicate; who is stealing, sales up and profit down, which employee
+     cannot be trusted. A host page pre-picks one: gigapoo.open("need", { topic, subject }). */
+  var TOPICS = [["company", "a company or its filings"], ["business", "my business — who is stealing, sales up and profit down, who cannot be trusted"], ["work", "work — the boss, a coworker, a promotion"], ["love", "marriage, dating, a relationship"], ["gaslight", "am I being gaslighted"], ["group", "a group, a club, a team — what is going on, why was I left out"], ["chance", "my chances — the coach, the part, the offer"], ["move", "a decision — where to live, whether to stay"], ["person", "a person"], ["property", "a property or a deed"], ["claim", "a claim in the news or online"], ["family", "a family history"], ["court", "a court or public record"], ["money", "money owed, a scam, a contract"], ["other", "something else"]];
+  function topicOptions(sel) { return TOPICS.map(function (t) { return '<option value="' + t[0] + '"' + (t[0] === sel ? ' selected' : '') + '>' + esc(t[1]) + '</option>'; }).join(""); }
   function scenarioForm(pre) {
     pane.innerHTML = '<form>'
       + '<div class="rule"><b>Describe the scenario.</b> A sleuth bids on what you write here, so write it all: what happened, what you already know, what you want found out. Always remote, always digital &mdash; a named person&rsquo;s <b>opinion, never advice</b>, for a fee. Nobody is anonymous, buyers included.</div>'
-      + '<div class="f2"><div><label for="gp-sc-topic">What is it about?</label><select id="gp-sc-topic"><option value="company">a company or its filings</option><option value="person">a person</option><option value="property">a property or a deed</option><option value="claim">a claim in the news or online</option><option value="family">a family history</option><option value="court">a court or public record</option><option value="money">money owed, a scam, a contract</option><option value="other">something else</option></select></div>'
+      + '<div class="f2"><div><label for="gp-sc-topic">What is it about?</label><select id="gp-sc-topic">' + topicOptions(pre.topic) + '</select></div>'
       + '<div><label for="gp-sc-subject">In one line</label><input id="gp-sc-subject" value="' + esc(pre.subject || "") + '" placeholder="Who really owns the building at 40 Main Street?"></div></div>'
       + '<div><label for="gp-sc-scenario">The scenario &mdash; what happened, in your own words</label><textarea id="gp-sc-scenario" rows="6" placeholder="Start at the beginning. Names, dates, places, what was said, what was signed."></textarea></div>'
       + '<div class="f2"><div><label for="gp-sc-known">What you already know or have</label><textarea id="gp-sc-known" rows="3" placeholder="documents, links, a ticker, a case number"></textarea></div><div><label for="gp-sc-wanted">What you want found out</label><textarea id="gp-sc-wanted" rows="3" placeholder="the question you need answered"></textarea></div></div>'
@@ -516,6 +541,7 @@
       + '<div class="check"><input id="gp-s-nomad" type="checkbox"><label for="gp-s-nomad" style="text-transform:none;letter-spacing:0;font:14px var(--gp-sans);color:var(--gp-ink2)"><b>I move around — no fixed address.</b> I will keep my location on and check in monthly.</label></div>'
       + '<div class="row"><button class="btn quiet" type="button" id="gp-s-locate">Use my location</button><span class="hint" id="gp-s-locmsg">Optional for a fixed address; required if you move around. The exact point is never published — only your city and country.</span></div>'
       + '<div><label for="gp-s-about">About you, in a few lines &mdash; the first thing on your profile</label><textarea id="gp-s-about" rows="3" placeholder="what you can figure out, how long you have done it, what you want to be hired for"></textarea><p class="hint">Everyone here has a profile under their own name: the work delivered, the events held, every review as written. It is your record; it is how your value gets seen.</p></div>'
+      + whyFields('s')
       + '<div class="rule" style="background:var(--gp-sky2);border-color:var(--gp-line);color:var(--gp-ink2)"><b>What you can do</b> — your first offer, in your own words. You can add more once you are verified.</div>'
       + '<div><label for="gp-s-title">The task</label><input id="gp-s-title" placeholder="I will read your company&rsquo;s warrant agreement and tell you what it permits"></div>'
       + '<div class="f2"><div><label for="gp-s-price">Your price, in dollars</label><input id="gp-s-price" type="number" min="1" step="1" placeholder="150"></div><div><label for="gp-s-where">Where</label><select id="gp-s-where"><option value="remote">remote — over the wire</option><option value="in_place">in person — at the buyer&rsquo;s address</option></select></div></div>'
@@ -540,7 +566,8 @@
       var d = { action: "join", site: SITE, name: f.querySelector("#gp-s-name").value, email: f.querySelector("#gp-s-email").value, phone: f.querySelector("#gp-s-phone").value,
         credential: f.querySelector("#gp-s-cred").value, city: f.querySelector("#gp-s-city").value, country: f.querySelector("#gp-s-country").value,
         born: bornIn.value, guardian_name: f.querySelector("#gp-s-gname").value, guardian_phone: f.querySelector("#gp-s-gphone").value, achpay: f.querySelector("#gp-s-ach").value,
-        nomad: nomad ? 1 : 0, location_on: (nomad || pos.lat != null) ? 1 : 0, lat: pos.lat, lng: pos.lng, about: f.querySelector("#gp-s-about").value };
+        nomad: nomad ? 1 : 0, location_on: (nomad || pos.lat != null) ? 1 : 0, lat: pos.lat, lng: pos.lng, about: f.querySelector("#gp-s-about").value,
+        why_kind: (f.querySelector("#gp-s-whykind") || {}).value || "", why: (f.querySelector("#gp-s-why") || {}).value || "" };
       /* the first offer travels with the application; the engine stores it the moment the token is issued */
       var first = { title: f.querySelector("#gp-s-title").value, price: f.querySelector("#gp-s-price").value, where: f.querySelector("#gp-s-where").value, delivery: f.querySelector("#gp-s-delivery").value, days: f.querySelector("#gp-s-days").value };
       try { localStorage.setItem("gigapoo.first_offer", JSON.stringify(first)); } catch (x) {}
@@ -561,6 +588,8 @@
       pane.innerHTML = '<div class="list">'
         + '<div class="card">' + sellerHead(you) + '<div class="meta">' + esc(loc.says || "") + ' ' + (you.location && you.location.nomad ? '<button class="btn quiet" id="gp-checkin" style="padding:6px 10px;font-size:13px">Check in — I am here now</button>' : '') + '</div></div>'
         + '<div class="row"><span class="hint">Sales released: ' + (d.sales ? d.sales.released : 0) + ' · earned ' + esc(d.sales ? d.sales.earned : "$0") + '</span><a class="btn quiet" href="' + PROFILE + esc(you.id) + '" style="padding:6px 10px;font-size:13px;text-decoration:none">My profile</a> <button class="btn quiet" id="gp-signout" style="padding:6px 10px;font-size:13px">Forget this token</button></div></div>'
+        /* why they are good at this — shown filled in; change it any time */
+        + '<form id="gp-why">' + whyFields('w') + '<div class="row"><span class="hint">' + (you.why || you.why_label ? 'Now: ' + esc((you.why_label || '').split(' — ')[0]) + (you.why ? ' — ' + esc(you.why) : '') : 'Not answered yet — it shows on your card once you do.') + '</span><button class="btn quiet" type="submit">Save why</button></div><div class="msg"></div></form>'
         + '<form id="gp-offer"><div class="rule"><b>Add what you can do.</b> Your words, your price. It shows with your name and city.</div>'
         + '<div><label for="gp-o-title">The task</label><input id="gp-o-title" value="' + esc(first ? first.title : "") + '"></div>'
         + '<div><label for="gp-o-blurb">A line or two more (optional)</label><input id="gp-o-blurb"></div>'
@@ -669,7 +698,14 @@
           get(API + "/?" + q({ action: "where", token: tok, lat: p.coords.latitude, lng: p.coords.longitude, city: (cc[0] || "").trim(), country: (cc[1] || "").trim() })).then(function (r) { alert(r.ok ? "Checked in: " + r.where : (r.error || "did not check in")); mine(tok); });
         }, function () { alert("Location was not shared; a nomad's check-in needs it."); });
       });
-      pane.querySelector("#gp-signout").addEventListener("click", function () { setToken(""); sellForm(); });
+      (function () {
+        var wf = pane.querySelector("#gp-why"); if (!wf) return;
+        var sel = wf.querySelector("#gp-w-whykind"), ta = wf.querySelector("#gp-w-why"); if (you.why_kind) sel.value = you.why_kind; if (you.why) ta.value = you.why;
+        wf.addEventListener("submit", function (e) {
+          e.preventDefault(); var m = wf.querySelector(".msg");
+          get(API + "/?" + q({ action: "why", token: tok, why_kind: sel.value, why: ta.value })).then(function (r) { m.innerHTML = r.ok ? '<div class="done">Saved. ' + esc(r.note) + '</div>' : '<div class="warn">' + esc(r.error) + '</div>'; });
+        });
+      })();      pane.querySelector("#gp-signout").addEventListener("click", function () { setToken(""); sellForm(); });
       pane.querySelector("#gp-achpay").addEventListener("click", function (e) { e.preventDefault(); var a = prompt("Your achplug.com address — Gigapoo pays you there, and nowhere else:"); if (!a) return; get(API + "/?" + q({ action: "bank", token: tok, achpay: a })).then(function (r) { alert(r.ok ? r.note : (r.error || "did not save")); mine(tok); }); });
     }).catch(function () { pane.innerHTML = '<div class="warn">Could not reach the market.</div>'; });
   }

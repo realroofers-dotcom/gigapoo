@@ -262,7 +262,7 @@
      ?action=stats
    ========================================================================== */
 
-const BUILD = "gigapoo-1d · 2026-09-20 · the engine: gigs, jobs and paid events on every site's books; attendees registered and verified by the host; credit settled by ACH; nothing is free";
+const BUILD = "gigapoo-1e · 2026-09-21 · why: a seller says why they are good at this (detective, ex-con, wisdom, records) — on the card and the profile; 1d: gigs, jobs and paid events on every site's books; credit settled by ACH; nothing is free";
 const NOTHING_FREE = "Free has no value here. Every gig, job and event carries a price.";
 const ACH = "achplug.com";   /* the rail tickets settle on — his call, 20 Sep */
 /* HIS RULE, 20 Sep, on meetups: "people want for free but that costs time and
@@ -282,6 +282,17 @@ const NO_INTEREST = "Credit accumulates across events and is paid by ACH; Gigapo
 const LOCATION_STALE_DAYS = 30;
 const DELIVERY = ["text", "voice", "own", "file", "in_person"];
 const WHERE = ["remote", "in_place"];
+/* why a seller is good at this — his words, 21 Sep: "detective, ex-con, wisdom?" */
+const WHY_KINDS = {
+  detective: "Detective or investigator — I did this for a living",
+  excon:     "Ex-convict — I have seen how it is done, from the inside",
+  wisdom:    "Wisdom — decades of reading people, paper and deals",
+  records:   "Records — I know where things are filed and how to read them",
+  reader:    "Mystery reader — a lifetime of whodunits taught me how it is done, and how it is found out",
+  seenitall: "Seen it all — a life that taught me what people do, and why",
+  other:     "Something else — I say what in my own words"
+};
+const WHY_MAX = 400;
 
 /* the fee defaults — written into gp_fees once, then the table is the truth.
    The same numbers gigapoo.com prints. The house's terms with a site: 10% of
@@ -387,7 +398,7 @@ export default {
       }
 
       /* ---- seller, by token ---- */
-      if (["offer", "bid", "event", "event_photo", "guests", "approve", "decline", "ban", "unban", "reach", "watch", "news", "where", "bank", "me", "photo"].indexOf(a) > -1) {
+      if (["offer", "bid", "event", "event_photo", "guests", "approve", "decline", "ban", "unban", "reach", "watch", "news", "where", "bank", "why", "me", "photo"].indexOf(a) > -1) {
         const me = await bySeller(env, q.get("token"));
         if (!me) return json({ ok:false, build: BUILD, error:"not a verified seller" }, H, 401);
         if (a === "offer") return json(await offer(env, me, q), H);
@@ -406,6 +417,7 @@ export default {
         if (a === "news") return json(await news(env, me.watch_city || me.city, me.watch_country || me.country, 14, u.origin), H);
         if (a === "where") return json(await whereAmI(env, me, q), H);
         if (a === "bank")  return json(await bank(env, me, q), H);
+        if (a === "why")   return json(await setWhy(env, me, q), H);
         if (a === "photo") return json(await putPhoto(env, me, req, u.origin), H);
         return json(await mine(env, me, u.origin), H);
       }
@@ -595,6 +607,11 @@ async function setup(env) {
   await add("ALTER TABLE gp_requests ADD COLUMN scenario TEXT");
   await add("ALTER TABLE gp_requests ADD COLUMN known TEXT");
   await add("ALTER TABLE gp_requests ADD COLUMN wanted TEXT");
+  /* 21 Sep — WHY. His rule for Wise Sleuth: "the sleuth needs to say why they
+     are a good sleuth — detective, ex-con, wisdom?" why_kind is one of
+     WHY_KINDS; why is their own words, published on the profile and the card. */
+  await add("ALTER TABLE gp_sellers ADD COLUMN why_kind TEXT");
+  await add("ALTER TABLE gp_sellers ADD COLUMN why TEXT");
   await D.prepare(
     `CREATE TABLE IF NOT EXISTS gp_reviews (
        id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -746,7 +763,7 @@ async function siteInfo(env, key) {
   if (!s || s.state === "applied" || s.state === "refused") return { ok:false, build: BUILD, error:"not a live site key" };
   const g = await gate(env, key);
   return Object.assign({ ok:true, build: BUILD, paused: !!(g && g.off), why: g && g.off ? g.why : null }, pubSite(s),
-    { rule: "Every seller here has a name, a telephone and a location on file, verified by a telephone call" + (Number(s.min_age) >= 18 ? ", and is " + s.min_age + " or older." : ". A seller under 18 has a parent or guardian on file.") });
+    { why_kinds: WHY_KINDS, why_max: WHY_MAX, rule: "Every seller here has a name, a telephone and a location on file, verified by a telephone call" + (Number(s.min_age) >= 18 ? ", and is " + s.min_age + " or older." : ". A seller under 18 has a parent or guardian on file.") });
 }
 async function setPurpose(env, q) {
   const id = q.get("id"); if (!id) return { ok:false, error:"which site? (&id=)" };
@@ -920,6 +937,7 @@ async function join(env, q) {
           shorten(q.get("education"), 160) || null, url(q.get("linkedin"), "linkedin.com"), year(q.get("since")),
           site, yes(q.get("bank")) ? 1 : 0, born, age < 18 ? gName : null, age < 18 ? gPhone : null).run();
   if (clean(q.get("achpay"))) await env.OVERHANG.prepare("UPDATE gp_sellers SET achpay=? WHERE id=?").bind(shorten(q.get("achpay"), 120), lastId(r)).run();
+  if (clean(q.get("why")) || clean(q.get("why_kind"))) await setWhy(env, { id: lastId(r) }, q);
 
   return { ok:true, build: BUILD, id: lastId(r), state:"applied",
     note:"Applied. A person telephones you before anything you write is published. " +
@@ -976,11 +994,22 @@ function locationState(x) {
     nomad: !!x.nomad, location_on: !!x.location_on, checked_in_days_ago: days, stale,
     says: x.nomad ? (stale ? "No fixed address; location not confirmed in the last " + LOCATION_STALE_DAYS + " days — not shown for in-place work." : "No fixed address; location confirmed " + (days === 0 ? "today" : days + " days ago") + ".") : "Based in " + x.city + ", " + x.country + "." };
 }
+/* why they are good at this: the kind they picked and their own words. Written
+   at join, or later with ?action=why&token=…&why_kind=…&why=… */
+async function setWhy(env, me, q) {
+  const kind = String(q.get("why_kind") || "").toLowerCase().trim();
+  const why = shorten(q.get("why"), WHY_MAX) || null;
+  if (kind && !WHY_KINDS[kind]) return { ok:false, error:"why_kind must be one of " + Object.keys(WHY_KINDS).join(", "), kinds: WHY_KINDS };
+  if (!kind && !why) return { ok:false, error:"say why: why_kind and/or why", kinds: WHY_KINDS };
+  await env.OVERHANG.prepare("UPDATE gp_sellers SET why_kind = COALESCE(?, why_kind), why = COALESCE(?, why) WHERE id = ?").bind(kind || null, why, me.id).run();
+  return { ok:true, build: BUILD, why_kind: kind || null, why, note:"On your profile and your card, as written." };
+}
 function pubSeller(x, origin) {
   const reviews = Number(x.reviews) || 0;
   return {
     id: x.id, name: x.name, org: x.org || null, credential: x.credential || null,
     photo: x.photo_key ? ((origin || "") + "/?photo=" + x.id) : null,
+    why_kind: x.why_kind || null, why_label: x.why_kind ? (WHY_KINDS[x.why_kind] || null) : null, why: x.why || null,
     about: x.about || null, education: x.education || null, linkedin: x.linkedin || null,
     since: x.since_year || null,
     location: locationState(x),
@@ -1083,7 +1112,7 @@ async function offer(env, me, q) {
 }
 async function offers(env, q, origin) {
   const site = clean(q.get("site")) || null, where = pick(q.get("where"), WHERE);
-  let sql = `SELECT o.*, s.name, s.city, s.country, s.nomad, s.location_on, s.location_at, s.credential, s.photo_key, s.id AS sid,
+  let sql = `SELECT o.*, s.name, s.city, s.country, s.nomad, s.location_on, s.location_at, s.credential, s.photo_key, s.why_kind, s.why, s.id AS sid,
                     (SELECT COUNT(*) FROM gp_ratings g WHERE g.seller_id = s.id) reviews,
                     (SELECT ROUND(AVG(stars),1) FROM gp_ratings g WHERE g.seller_id = s.id) stars
                FROM gp_offers o JOIN gp_sellers s ON s.id = o.seller_id
@@ -1101,7 +1130,7 @@ async function offers(env, q, origin) {
   const f = await fees(env);
   const out = (r.results || []).map(x => {
     const loc = locationState(x);
-    return pubOffer(x, f, { id: x.sid, name: x.name, credential: x.credential || null, photo: x.photo_key ? ((origin || "") + "/?photo=" + x.sid) : null,
+    return pubOffer(x, f, { id: x.sid, name: x.name, credential: x.credential || null, why_kind: x.why_kind || null, why_label: x.why_kind ? (WHY_KINDS[x.why_kind] || null) : null, why: x.why || null, photo: x.photo_key ? ((origin || "") + "/?photo=" + x.sid) : null,
       city: x.city, country: x.country, location: loc, reviews: Number(x.reviews) || 0, stars: (Number(x.reviews) || 0) ? Number(x.stars) : null });
   }).filter(o => !(o.where === "in_place" && o.by.location.stale));
   return { ok:true, build: BUILD, site: site || "all", where: where || "all", offers: out };

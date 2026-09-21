@@ -37,7 +37,7 @@ h1{font:800 clamp(26px,4vw,38px)/1.1 var(--sans);letter-spacing:-.02em;margin:0 
 .ok{display:inline-flex;align-items:center;gap:4px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--green);background:#e8f6ef;border-radius:999px;padding:3px 9px;margin-right:6px}
 .ok.stale{color:var(--red);background:#fdecea}
 .pill{display:inline-block;border-radius:999px;padding:3px 10px;background:var(--sky2);color:var(--ink2);font:600 13px var(--sans);margin-right:6px}
-.about{font-size:17px;color:var(--ink2);margin:10px 0 0;max-width:62ch}
+.about{font-size:17px;color:var(--ink2);margin:10px 0 0;max-width:62ch}.about.why{background:var(--yellow2,#fff3c4);border:1px solid #f0d98a;border-radius:12px;padding:10px 14px;color:#5a4300}.about.why b{color:var(--ink)}
 .record{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 0}
 @media(max-width:640px){.record{grid-template-columns:1fr 1fr}}
 .record div{background:var(--yellow2);border:1px solid #f0d98a;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#5a4300}
@@ -91,6 +91,7 @@ footer a{color:var(--ink2)}
       + '<span class="ok' + (loc.stale ? ' stale' : '') + '">' + (loc.stale ? 'location not confirmed' : (loc.nomad ? 'on the move · location on' : 'verified by telephone')) + '</span>'
       + (s.credential ? '<span class="pill">' + esc(s.credential) + '</span>' : '<span class="pill">opinions, not advice</span>')
       + (s.since ? '<span class="pill">in the trade since ' + esc(s.since) + '</span>' : '')
+      + (s.why_label || s.why ? '<p class="about why"><b>Why: ' + esc(String(s.why_label || '').split(' — ')[0]) + '.</b> ' + esc(s.why || '') + '</p>' : '')
       + (s.about ? '<p class="about">' + esc(s.about) + '</p>' : '<p class="about empty">Nothing written yet.</p>')
       + '<div class="record"><div><b>' + (rec.jobs_delivered || 0) + '</b>jobs delivered</div><div><b>' + (s.reviews || 0) + '</b>reviews' + (s.stars ? ' · ' + esc(s.stars) + ' ★' : '') + '</div><div><b>' + (rec.events_held || 0) + '</b>events held' + (host.stars ? ' · ' + esc(host.stars) + ' ★' : '') + '</div><div><b>' + when(rec.member_since) + '</b>on the engine since</div></div>'
       + '</div></div>'
