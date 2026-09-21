@@ -288,6 +288,13 @@ const HOUSE_SITES = [
   { key: "nujobi",  name: "Nujobi", domain: "nujobi.com", min_age: 18, kinds: "text,voice,own,file",
     purpose: "Journalism and reading, sold by named people", audience: "18 and older",
     blurb: "Reporting, reading and research by people whose name, telephone and location are on file." },
+  /* 21 Sep — Wise Sleuth: a research club for senior citizens. Research gigs
+     (paid, in writing or by voice) and the club's events — meetups to do the
+     research together. His call: "add it as a gig on Gigapoo and a group for
+     events, just wisesleuth." */
+  { key: "wisesleuth", name: "Wise Sleuth", domain: "wisesleuth.com", min_age: 18, kinds: "text,voice,own,file,in_person",
+    purpose: "A research club for senior citizens", audience: "seniors, and anyone who likes to dig",
+    blurb: "Research gigs done by named people who dig — a company, a claim, a family history, a property, a public record — and the club's meetups to do it together. Nobody is anonymous." },
   { key: "gigapoo", name: "Gigapoo", domain: "gigapoo.com", min_age: 0, kinds: "",
     purpose: "Opportunities for youth, seniors and everyone", audience: "youth, seniors, everyone",
     blurb: "Any task except illegal or dangerous, remote or in person. Under 18? A parent or guardian goes on file with you." }
