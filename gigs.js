@@ -1,4 +1,4 @@
-/* BUILT 2026-09-21 · gigapoo gigs.js 1e (1e: every name links to the person's profile page — data-profile= sets the base)
+/* BUILT 2026-09-21 · gigapoo gigs.js 1f (1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
    BUILT 2026-09-20 · gigapoo gigs.js 1d
    (1d: a fifth door, Events — paid events held by verified sellers, tickets
     reserved by named people with a telephone; a job option on "I need
@@ -38,6 +38,11 @@
   var TOKEN_KEY = "gigapoo.token";
   /* every name is a link to the person's profile — the record under their own name */
   var PROFILE = (me && me.getAttribute("data-profile")) || "https://gigapoo.com/profile?id=";
+  /* data-scenario="1": the "I need someone" door becomes REQUEST A SLEUTH —
+     describe the scenario, what is known, what is wanted; always remote. His
+     rule for Wise Sleuth, 21 Sep: the data and the pattern are what the
+     house learns from. */
+  var SCENARIO = !!(me && me.getAttribute("data-scenario"));
 
   /* ---- the dress ---------------------------------------------------------- */
   var CSS = ''
@@ -141,7 +146,7 @@
     + '<button class="door on" data-door="offered"><b>Offered</b><span>what people here can do</span></button>'
     + '<button class="door" data-door="wanted"><b>Wanted</b><span>what people need done</span></button>'
     + '<button class="door" data-door="events"><b>Events</b><span>meetups, classes, talks — paid</span></button>'
-    + '<button class="door" data-door="need"><b>I need someone</b><span>a gig or a job — post it, get bids</span></button>'
+    + (SCENARIO ? '<button class="door" data-door="need"><b>Request a sleuth</b><span>describe the scenario, get bids</span></button>' : '<button class="door" data-door="need"><b>I need someone</b><span>a gig or a job — post it, get bids</span></button>')
     + '<button class="door" data-door="sell"><b>Sell here</b><span>say what you can do, or hold an event</span></button>'
     + '</div>'
     + '<p class="hint" style="margin:-6px 0 12px;text-align:center"><b>Free has no value here.</b> Every gig, job and event carries a price.</p>'
@@ -210,7 +215,8 @@
       if (!list.length) { pane.innerHTML = '<div class="empty"><b>Nothing wanted here yet.</b><br><a href="#" data-go="need">Post what you need</a> — a verified person will bid on it.</div>'; wireGo(); return; }
       pane.innerHTML = '<div class="list">' + list.map(function (r) {
         return '<div class="card" style="grid-template-columns:1fr"><div><div class="title">' + esc(r.subject) + '</div>' + (r.note ? '<p class="blurb">' + esc(r.note) + '</p>' : '')
-          + '<div class="meta">' + (r.kind === "job" ? '<span class="pill" style="background:var(--gp-orange);color:#fff">job · ' + esc(r.rate || '') + '</span>' : '') + (r.anyone ? '<span class="pill" style="background:#e8f6ef;color:#1d5a3f">anyone could do this</span>' : '') + '<span class="pill' + (r.where === "in_place" ? ' place' : '') + '">' + (r.where === "in_place" ? 'in person' + (r.near ? ' · ' + esc(r.near) : '') : 'remote') + '</span>'
+          + (r.scenario ? '<p class="blurb"><b>The scenario:</b> ' + esc(String(r.scenario).slice(0, 400)) + (String(r.scenario).length > 400 ? '…' : '') + (r.wanted ? '<br><b>Wanted:</b> ' + esc(r.wanted) : '') + '</p>' : '')
+          + '<div class="meta">' + (r.topic ? '<span class="pill">' + esc(r.topic) + '</span>' : '') + (r.kind === "job" ? '<span class="pill" style="background:var(--gp-orange);color:#fff">job · ' + esc(r.rate || '') + '</span>' : '') + (r.anyone ? '<span class="pill" style="background:#e8f6ef;color:#1d5a3f">anyone could do this</span>' : '') + '<span class="pill' + (r.where === "in_place" ? ' place' : '') + '">' + (r.where === "in_place" ? 'in person' + (r.near ? ' · ' + esc(r.near) : '') : 'remote') + '</span>'
           + '<span>asked by ' + esc(r.by) + (r.buyer_verified ? ' · verified' : '') + (r.buyer_stars ? ' · ★ ' + r.buyer_stars + ' (' + r.buyer_reviews + ')' : '') + '</span>' + (r.budget ? '<span>budget ' + esc(r.budget) + '</span>' : '') + '<span>' + r.bids + ' bid' + (r.bids === 1 ? '' : 's') + '</span></div></div>'
           + '<div class="row"><span class="hint">' + esc(String(r.made).slice(0, 10)) + '</span>'
           + (tok ? '<button class="btn quiet" data-bid="' + esc(r.id) + '" data-bid-subject="' + esc(r.subject) + '">Bid on this</button>' : '<span class="hint">Verified sellers bid here — <a href="#" data-go="sell">enrol</a> or paste your token under Sell here.</span>') + '</div></div>';
@@ -418,6 +424,7 @@
 
   /* ---- I need someone ----------------------------------------------------- */
   function needForm(pre) {
+    if (SCENARIO) return scenarioForm(pre);
     var inPlace = pre.where === "in_place";
     pane.innerHTML = '<form>'
       + '<div class="rule"><b>Nobody is anonymous — buyers included.</b> Your name and email always; for work done at an address, a telephone too: a person calls you before any seller sees where the work is, and your money is held until you say it is done.</div>'
@@ -445,6 +452,32 @@
           kind: ksel.value, rate: f.querySelector("#gp-need-rate").value, anyone: f.querySelector("#gp-need-anyone").checked ? 1 : 0,
           adult: (f.querySelector("#gp-need-adult") && f.querySelector("#gp-need-adult").checked) ? 1 : 0 }))
         .then(function (d) { msg.innerHTML = d.ok ? '<div class="done"><b>Posted.</b> ' + esc(d.note) + '</div>' : '<div class="warn"><b>Not yet:</b> ' + esc((d.missing || [d.error]).join(" · ")) + '</div>'; })
+        .catch(function () { msg.innerHTML = '<div class="warn">Could not reach the market.</div>'; });
+    });
+  }
+
+  /* ---- request a sleuth: the scenario ---------------------------------------- */
+  function scenarioForm(pre) {
+    pane.innerHTML = '<form>'
+      + '<div class="rule"><b>Describe the scenario.</b> A sleuth bids on what you write here, so write it all: what happened, what you already know, what you want found out. Always remote, always digital &mdash; a named person&rsquo;s <b>opinion, never advice</b>, for a fee. Nobody is anonymous, buyers included.</div>'
+      + '<div class="f2"><div><label for="gp-sc-topic">What is it about?</label><select id="gp-sc-topic"><option value="company">a company or its filings</option><option value="person">a person</option><option value="property">a property or a deed</option><option value="claim">a claim in the news or online</option><option value="family">a family history</option><option value="court">a court or public record</option><option value="money">money owed, a scam, a contract</option><option value="other">something else</option></select></div>'
+      + '<div><label for="gp-sc-subject">In one line</label><input id="gp-sc-subject" value="' + esc(pre.subject || "") + '" placeholder="Who really owns the building at 40 Main Street?"></div></div>'
+      + '<div><label for="gp-sc-scenario">The scenario &mdash; what happened, in your own words</label><textarea id="gp-sc-scenario" rows="6" placeholder="Start at the beginning. Names, dates, places, what was said, what was signed."></textarea></div>'
+      + '<div class="f2"><div><label for="gp-sc-known">What you already know or have</label><textarea id="gp-sc-known" rows="3" placeholder="documents, links, a ticker, a case number"></textarea></div><div><label for="gp-sc-wanted">What you want found out</label><textarea id="gp-sc-wanted" rows="3" placeholder="the question you need answered"></textarea></div></div>'
+      + '<div class="f2"><div><label for="gp-sc-name">Your full name</label><input id="gp-sc-name" autocomplete="name"></div><div><label for="gp-sc-email">Email</label><input id="gp-sc-email" type="email" autocomplete="email"></div></div>'
+      + '<div class="f2"><div><label for="gp-sc-phone">Telephone</label><input id="gp-sc-phone" type="tel" autocomplete="tel"></div><div><label for="gp-sc-budget">What you would pay, in dollars</label><input id="gp-sc-budget" type="number" min="5" step="1" placeholder="60"><p class="hint">Free has no value here.</p></div></div>'
+      + (adult() ? '<div class="check"><input id="gp-sc-adult" type="checkbox"><label for="gp-sc-adult" style="text-transform:none;letter-spacing:0;font:14px var(--gp-sans);color:var(--gp-ink2)"><b>I am ' + SI.min_age + ' or older.</b></label></div>' : '')
+      + '<div class="row"><span class="hint">Nothing is owed to post. Sleuths bid; you pick one or none. What you write is kept &mdash; it is how the club learns what people need.</span><button class="btn" type="submit">Request a sleuth</button></div><div class="msg"></div></form>';
+    var f = pane.querySelector("form"), msg = f.querySelector(".msg");
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var sc = f.querySelector("#gp-sc-scenario").value.trim();
+      if (sc.length < 60) { msg.innerHTML = '<div class="warn">Describe the scenario &mdash; a few sentences at least. A sleuth cannot bid on a line.</div>'; return; }
+      get(API + "/?" + q({ action: "want", site: SITE, kind: "gig", where: "remote", subject: f.querySelector("#gp-sc-subject").value, note: sc.slice(0, 600),
+          topic: f.querySelector("#gp-sc-topic").value, scenario: sc, known: f.querySelector("#gp-sc-known").value, wanted: f.querySelector("#gp-sc-wanted").value,
+          name: f.querySelector("#gp-sc-name").value, email: f.querySelector("#gp-sc-email").value, phone: f.querySelector("#gp-sc-phone").value, budget: f.querySelector("#gp-sc-budget").value,
+          adult: (f.querySelector("#gp-sc-adult") && f.querySelector("#gp-sc-adult").checked) ? 1 : 0 }))
+        .then(function (d) { msg.innerHTML = d.ok ? '<div class="done"><b>Posted.</b> ' + esc(d.note) + ' A sleuth&rsquo;s answer is an opinion, never advice.</div>' : '<div class="warn"><b>Not yet:</b> ' + esc((d.missing || [d.error]).join(" · ")) + '</div>'; })
         .catch(function () { msg.innerHTML = '<div class="warn">Could not reach the market.</div>'; });
     });
   }

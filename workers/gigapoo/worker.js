@@ -241,6 +241,7 @@
                             seller_own_cents, house_small_bps, house_large_bps,
                             house_threshold_cents, late_days)
      ?action=requests       every request
+     ?action=scenarios[&site=&topic=]   every scenario described, whole, with bids and sales — to learn from
      ?action=stats
    ========================================================================== */
 
@@ -418,6 +419,7 @@ export default {
       if (a === "off" || a === "on") return json(await switchSite(env, q.get("id"), a === "off", q.get("why")), H);
       if (a === "fees")         return json(await setFees(env, q), H);
       if (a === "requests")     return json(await allRequests(env), H);
+      if (a === "scenarios")    return json(await scenarios(env, q), H);
       return json(await stats(env), H);
     } catch (e) {
       return json({ ok:false, build: BUILD, error:String(e) }, H, 500);
@@ -552,6 +554,14 @@ async function setup(env) {
   await add("ALTER TABLE gp_requests ADD COLUMN kind TEXT DEFAULT 'gig'");
   await add("ALTER TABLE gp_requests ADD COLUMN rate TEXT");
   await add("ALTER TABLE gp_requests ADD COLUMN anyone INTEGER DEFAULT 0");   /* no skill needed — anyone could do this */
+  /* 21 Sep — THE SCENARIO. His rule for Wise Sleuth: "they should have to request
+     a sleuth by describing the scenario. This data and pattern we will learn
+     from." A request may carry a topic and a long scenario (what happened,
+     what is known, what is wanted); the house reads them all at ?action=scenarios. */
+  await add("ALTER TABLE gp_requests ADD COLUMN topic TEXT");
+  await add("ALTER TABLE gp_requests ADD COLUMN scenario TEXT");
+  await add("ALTER TABLE gp_requests ADD COLUMN known TEXT");
+  await add("ALTER TABLE gp_requests ADD COLUMN wanted TEXT");
   await D.prepare(
     `CREATE TABLE IF NOT EXISTS gp_reviews (
        id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1078,6 +1088,10 @@ async function want(env, q) {
     .bind(site, shorten(subject, 160), shorten(q.get("note"), 600) || null, where, cents(q.get("budget")) || null,
           name, email, phone || null, city || null, country || null, kind, kind === "job" ? rateS : null).run();
   if (yes(q.get("anyone"))) await env.OVERHANG.prepare("UPDATE gp_requests SET anyone=1 WHERE id=?").bind(lastId(r)).run();
+  /* the scenario, when the site asks for one: the topic, what happened, what is known, what is wanted */
+  if (clean(q.get("scenario")) || clean(q.get("topic")))
+    await env.OVERHANG.prepare("UPDATE gp_requests SET topic=?, scenario=?, known=?, wanted=? WHERE id=?")
+      .bind(shorten(q.get("topic"), 40).toLowerCase() || null, shorten(q.get("scenario"), 4000) || null, shorten(q.get("known"), 2000) || null, shorten(q.get("wanted"), 1000) || null, lastId(r)).run();
   return { ok:true, build: BUILD, id: lastId(r), where, kind, anyone: yes(q.get("anyone")), paying: CREDIT_IS_FOR_EVENTS,
     note: where === "in_place"
       ? "Open for bids. A person will telephone you before any seller sees where the work is. Money is held until you say the job is done."
@@ -1085,7 +1099,7 @@ async function want(env, q) {
 }
 async function wanted(env, q) {
   const site = clean(q.get("site")) || null, where = pick(q.get("where"), WHERE);
-  let sql = `SELECT r.id, r.site, r.subject, r.note, r.where_, r.budget_cents, r.city, r.country, r.buyer_name, r.buyer_verified, r.made, r.kind, r.rate, r.anyone,
+  let sql = `SELECT r.id, r.site, r.subject, r.note, r.where_, r.budget_cents, r.city, r.country, r.buyer_name, r.buyer_verified, r.made, r.kind, r.rate, r.anyone, r.topic, r.scenario, r.wanted,
                     (SELECT COUNT(*) FROM gp_bids b WHERE b.request_id = r.id AND b.state='open') bids,
                     (SELECT COUNT(*) FROM gp_reviews v WHERE v.about = 'buyer:' || r.buyer_email) reviews,
                     (SELECT ROUND(AVG(stars),1) FROM gp_reviews v WHERE v.about = 'buyer:' || r.buyer_email) stars
@@ -1102,6 +1116,7 @@ async function wanted(env, q) {
   return { ok:true, build: BUILD, site: site || "all", where: where || "all",
     requests: (r.results || []).map(x => ({ id: x.id, site: x.site, subject: x.subject, note: x.note, where: x.where_,
       kind: x.kind || "gig", rate: x.rate || null, anyone: !!x.anyone,
+      topic: x.topic || null, scenario: x.scenario || null, wanted: x.wanted || null,
       buyer_reviews: Number(x.reviews) || 0, buyer_stars: (Number(x.reviews) || 0) ? Number(x.stars) : null,
       budget: x.budget_cents ? money(x.budget_cents) : null,
       near: x.where_ === "in_place" && x.city ? x.city + ", " + x.country : null,
@@ -1118,6 +1133,22 @@ async function oneRequest(env, id) {
       near: x.where_ === "in_place" && x.city ? x.city + ", " + x.country : null, by: String(x.buyer_name || "").split(/\s+/)[0], state: x.state, made: x.made },
     bids: (b.results || []).map(v => ({ id: v.id, by: { id: v.sid, name: v.name, city: v.city, country: v.country, credential: v.credential || null },
       price: money(v.cents), delivery: v.delivery, note: v.note, made: v.made })) };
+}
+/* the scenarios, whole, newest first — the data the house learns from:
+   what people need looked into, how they describe it, what they would pay,
+   which topics recur, which get bids and which get done */
+async function scenarios(env, q) {
+  const site = clean(q.get("site")) || null, topic = clean(q.get("topic")).toLowerCase() || null;
+  let sql = `SELECT r.*, (SELECT COUNT(*) FROM gp_bids b WHERE b.request_id = r.id) bids,
+                    (SELECT COUNT(*) FROM gp_sales s WHERE s.request_id = r.id) sales
+               FROM gp_requests r WHERE r.scenario IS NOT NULL`;
+  const binds = [];
+  if (site) { sql += " AND r.site = ?"; binds.push(site); }
+  if (topic) { sql += " AND r.topic = ?"; binds.push(topic); }
+  sql += " ORDER BY r.made DESC LIMIT 500";
+  const st = env.OVERHANG.prepare(sql); const r = await (binds.length ? st.bind(...binds) : st).all();
+  const byTopic = await env.OVERHANG.prepare("SELECT COALESCE(topic,'(none)') topic, COUNT(*) n, SUM(CASE WHEN state='open' THEN 1 ELSE 0 END) open FROM gp_requests WHERE scenario IS NOT NULL GROUP BY topic ORDER BY n DESC").all();
+  return { ok:true, build: BUILD, topics: byTopic.results || [], rows: r.results || [] };
 }
 async function allRequests(env) {
   const r = await env.OVERHANG.prepare(`SELECT r.*, (SELECT COUNT(*) FROM gp_bids b WHERE b.request_id = r.id) bids FROM gp_requests r ORDER BY r.made DESC LIMIT 200`).all();
