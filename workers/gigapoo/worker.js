@@ -132,6 +132,23 @@
      VARIABLES  STRIPE_SECRET, STRIPE_WEBHOOK_SECRET (cf.ps1 setvar; never in
      a file). Without them ?action=checkout says so and nothing else changes.
 
+   ⚠ ONE STORE FOR ALL THE SITES. His call, 21 Sep: "one store for all the
+     sites, and other sites can use it like a department store — we get our
+     cut." A PRODUCT (gp_products) belongs to a site: title, price, a
+     picture, whether it ships, its choices (sizes). The store page on
+     gigapoo.com shows every site's products, or one site's. A buyer pays by
+     card through the pay desk (?buy=store&product=…), Stripe collects the
+     address, and the ORDER comes back here (?action=order): a sale on the
+     vendor site's ledger — so the house's cut is the same half-year bill —
+     and a row in gp_orders for the vendor to ship. The first product is
+     Wise Sleuth's T-shirt.
+     ?products=1[&site=]      the store            ?product=<id>   one product
+     ?action=product&key=<site key>&title=&price=&blurb=&ships=1&choices=S,M,L,XL,XXL&stock=
+     ?action=product_photo&key=…&product=<id>   POST the picture
+     ?action=orders&key=<site key>      the site's orders, to ship
+     ?action=shipped&key=…&order=<id>&tracking=
+     ?offer=<id>              one offer, priced for the pay desk (public)
+
    ⚠ EACH SITE'S MARKET HAS A PURPOSE. His rule, 20 Sep: Warrant Wire and
      8K10Q want READERS AND AUDIO OPINIONS ON FINANCE, 18 AND OLDER; a
      community site wants opportunities for youth, seniors and everyone.
@@ -330,6 +347,10 @@ export default {
         if (q.get("epic"))    return await servePhoto(env, q.get("epic"), "event");
         if (q.get("pictures")) return json(await pictures(env, q, u.origin), H);
         if (q.get("pins"))    return json(await pins(env, q, u.origin), H);
+        if (q.get("products")) return json(await products(env, q, u.origin), H);
+        if (q.get("product"))  return json(await oneProduct(env, q.get("product"), u.origin), H);
+        if (q.get("offer"))    return json(await oneOffer(env, q.get("offer"), u.origin), H);
+        if (q.get("ppic"))     return await servePhoto(env, q.get("ppic"), "product");
         if (q.get("seller"))  return json(await profile(env, q.get("seller"), u.origin), H);
         if (q.get("request")) return json(await oneRequest(env, q.get("request")), H);
         if (q.get("sellers")) return json(await roster(env, q, u.origin), H);
@@ -387,7 +408,7 @@ export default {
       }
 
       /* ---- site, by its key (the house key opens any site's desk) ---- */
-      if (["ledger", "hide", "unhide", "sale", "checkout"].indexOf(a) > -1) {
+      if (["ledger", "hide", "unhide", "sale", "checkout", "product", "product_photo", "orders", "shipped", "order"].indexOf(a) > -1) {
         const k = req.headers.get("X-Auth-Key") || q.get("key");
         const house = !!env.LOG_KEY && k === env.LOG_KEY;
         /* the ledger and a sale still work while a site is off — the books
@@ -397,6 +418,15 @@ export default {
         if (a === "ledger") return json(await ledger(env, site), H);
         if (a === "sale")   return json(await sale(env, site, q), H);
         if (a === "checkout") return json(await checkout(env, site, q, u.origin), H);
+        if (a === "product")  return json(await addProduct(env, site, q, u.origin), H);
+        if (a === "product_photo") {
+          const pr = await env.OVERHANG.prepare("SELECT id FROM gp_products WHERE id = ? AND site = ?").bind(q.get("product"), site.key).first();
+          if (!pr) return json({ ok:false, error:"not your product" }, H, 403);
+          return json(await putPhoto(env, pr, req, u.origin, "product"), H);
+        }
+        if (a === "orders")   return json(await orders(env, site), H);
+        if (a === "shipped")  return json(await shipped(env, site, q), H);
+        if (a === "order")    return json(await order(env, site, q), H);
         return json(await hideSeller(env, site, q.get("seller"), a === "hide"), H);
       }
 
@@ -627,6 +657,23 @@ async function setup(env) {
   await add("ALTER TABLE gp_sales ADD COLUMN host_ref TEXT");
   await add("ALTER TABLE gp_events ADD COLUMN copied_from INTEGER"); /* the archive is for copying: this one came from that one */
   await add("ALTER TABLE gp_events ADD COLUMN kind TEXT");
+  /* THE STORE */
+  await D.prepare(
+    `CREATE TABLE IF NOT EXISTS gp_products (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       site TEXT NOT NULL, title TEXT NOT NULL, blurb TEXT,
+       cents INTEGER NOT NULL, ships INTEGER DEFAULT 1, choices TEXT,   /* 'S,M,L,XL,XXL' */
+       stock INTEGER, sold INTEGER DEFAULT 0, photo_key TEXT,
+       state TEXT DEFAULT 'live', made TEXT DEFAULT (datetime('now')))`).run();
+  await D.prepare(
+    `CREATE TABLE IF NOT EXISTS gp_orders (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       product_id INTEGER NOT NULL, site TEXT NOT NULL, sale_id INTEGER,
+       buyer_name TEXT, buyer_email TEXT, phone TEXT, address TEXT, choice TEXT,
+       paid_cents INTEGER, ref TEXT,
+       state TEXT DEFAULT 'to_ship',          /* to_ship | shipped | refunded */
+       tracking TEXT, shipped_at TEXT, made TEXT DEFAULT (datetime('now')))`).run();
+  await add("ALTER TABLE gp_sales ADD COLUMN product_id INTEGER");
   await add("ALTER TABLE gp_events ADD COLUMN lat REAL");   /* geocoded from the place, for the map with icons */
   await add("ALTER TABLE gp_events ADD COLUMN lng REAL");
   /* the geocode cache: a place as written → a point. OpenStreetMap's
@@ -1592,6 +1639,76 @@ async function stripeHook(env, req) {
   return await sale(env, site, q);
 }
 
+/* ---- the store ------------------------------------------------------------ */
+function pubProduct(p, siteName, origin) {
+  return { id: p.id, site: p.site, sold_by: siteName || p.site, title: p.title, blurb: p.blurb || null,
+    price_cents: p.cents, price: money(p.cents), ships: !!p.ships, choices: p.choices ? String(p.choices).split(",").map(s => s.trim()).filter(Boolean) : [],
+    stock: p.stock, sold: p.sold || 0, sold_out: p.stock != null && p.sold >= p.stock,
+    picture: p.photo_key ? ((origin || "") + "/?ppic=" + p.id) : null, made: p.made };
+}
+async function products(env, q, origin) {
+  const site = clean(q.get("site")) || null;
+  const r = await env.OVERHANG.prepare(
+    `SELECT p.*, s.name site_name FROM gp_products p LEFT JOIN gp_sites s ON s.key = p.site WHERE p.state = 'live'` + (site ? " AND p.site = ?" : "") + " ORDER BY p.made DESC LIMIT 200")
+    .bind(...(site ? [site] : [])).all();
+  return { ok:true, build: BUILD, site: site || "all", products: (r.results || []).map(p => pubProduct(p, p.site_name, origin)),
+    note: "One store for every site on the engine. A product is sold by the site that listed it, shipped by that site, and booked on that site's ledger." };
+}
+async function oneProduct(env, id, origin) {
+  const p = await env.OVERHANG.prepare("SELECT p.*, s.name site_name FROM gp_products p LEFT JOIN gp_sites s ON s.key = p.site WHERE p.id = ? AND p.state = 'live'").bind(id).first();
+  if (!p) return { ok:false, error:"no such product" };
+  return { ok:true, build: BUILD, product: pubProduct(p, p.site_name, origin) };
+}
+async function addProduct(env, site, q, origin) {
+  const title = clean(q.get("title")), amount = cents(q.get("price"));
+  if (!title || title.length < 3) return { ok:false, error:"what is it?" };
+  if (!amount) return { ok:false, error:"what does it cost? " + NOTHING_FREE };
+  const choices = clean(q.get("choices")).split(",").map(s => s.trim()).filter(Boolean).slice(0, 12).join(",") || null;
+  const stock = num(q.get("stock")) == null ? null : Math.max(0, Math.round(num(q.get("stock"))));
+  const r = await env.OVERHANG.prepare("INSERT INTO gp_products (site, title, blurb, cents, ships, choices, stock) VALUES (?,?,?,?,?,?,?)")
+    .bind(site.key, shorten(title, 120), shorten(q.get("blurb"), 600) || null, amount, q.get("ships") == null ? 1 : (yes(q.get("ships")) ? 1 : 0), choices, stock).run();
+  const id = lastId(r);
+  return { ok:true, build: BUILD, id, price: money(amount), picture: "POST the picture to ?action=product_photo&key=…&product=" + id,
+    buy_link: "https://pay.warrantwire.com/?go=store&product=" + id + "&collect_email=1&on=" + ({ wire:"wire", k8:"k8", wisesleuth:"ws" }[site.key] || "gp"),
+    note: "In the store. Sold under " + site.name + "'s name, shipped by " + site.name + ", booked on " + site.name + "'s ledger — the half-year bill is the house's cut." };
+}
+/* the order comes from the pay desk when Stripe has taken the money */
+async function order(env, site, q) {
+  const pid = q.get("product"); if (!pid) return { ok:false, error:"which product?" };
+  const p = await env.OVERHANG.prepare("SELECT * FROM gp_products WHERE id = ?").bind(pid).first();
+  if (!p) return { ok:false, error:"no such product" };
+  const vendor = await siteRow(env, p.site); if (!vendor) return { ok:false, error:"the product's site is gone" };
+  const ref = clean(q.get("ref")) || null;
+  if (ref) { const had = await env.OVERHANG.prepare("SELECT id FROM gp_orders WHERE ref = ?").bind(ref).first(); if (had) return { ok:true, build: BUILD, already:true, order: had.id }; }
+  const paid = Math.max(0, Math.round(num(q.get("paid_cents")) || p.cents));
+  const s = await env.OVERHANG.prepare(
+    `INSERT INTO gp_sales (site, seller_id, product_id, buyer_email, price_cents, buyer_fee_cents, seller_fee_cents, site_share_cents, where_, state, ref, rail)
+     VALUES (?,0,?,?,?,0,0,0,'remote','paid',?,'stripe')`).bind(p.site, p.id, clean(q.get("buyer_email")).toLowerCase() || null, paid, ref, ).run();
+  const o = await env.OVERHANG.prepare(
+    "INSERT INTO gp_orders (product_id, site, sale_id, buyer_name, buyer_email, phone, address, choice, paid_cents, ref) VALUES (?,?,?,?,?,?,?,?,?,?)")
+    .bind(p.id, p.site, lastId(s), clean(q.get("buyer_name")) || null, clean(q.get("buyer_email")).toLowerCase() || null, clean(q.get("phone")) || null, shorten(q.get("address"), 600) || null, shorten(q.get("choice"), 60) || null, paid, ref).run();
+  await env.OVERHANG.prepare("UPDATE gp_products SET sold = sold + 1 WHERE id = ?").bind(p.id).run();
+  return { ok:true, build: BUILD, order: lastId(o), product: p.title, site: p.site, paid: money(paid), to_ship: !!p.ships };
+}
+async function orders(env, site) {
+  const r = await env.OVERHANG.prepare("SELECT o.*, p.title FROM gp_orders o JOIN gp_products p ON p.id = o.product_id WHERE o.site = ? ORDER BY o.state, o.made DESC LIMIT 300").bind(site.key).all();
+  return { ok:true, build: BUILD, site: site.key, orders: (r.results || []).map(x => ({ order: x.id, product: x.title, choice: x.choice, paid: money(x.paid_cents), buyer: x.buyer_name, email: x.buyer_email, phone: x.phone, address: (() => { try { return JSON.parse(x.address); } catch (e) { return x.address; } })(), state: x.state, tracking: x.tracking, made: x.made, shipped_at: x.shipped_at })) };
+}
+async function shipped(env, site, q) {
+  const id = q.get("order"); if (!id) return { ok:false, error:"which order?" };
+  const r = await env.OVERHANG.prepare("UPDATE gp_orders SET state='shipped', tracking=?, shipped_at=datetime('now') WHERE id=? AND site=?").bind(clean(q.get("tracking")) || null, id, site.key).run();
+  return { ok:true, build: BUILD, order: Number(id), shipped: !!(r.meta && r.meta.changes) };
+}
+/* one offer, priced, for the pay desk: what the buyer pays, and whether the seller can be paid */
+async function oneOffer(env, id, origin) {
+  const o = await env.OVERHANG.prepare("SELECT o.*, s.id sid, s.name, s.city, s.country, s.achpay, s.state sstate FROM gp_offers o JOIN gp_sellers s ON s.id = o.seller_id WHERE o.id = ?").bind(id).first();
+  if (!o || o.state !== "live" || o.sstate !== "verified") return { ok:false, error:"no such offer" };
+  const f = await fees(env);
+  return { ok:true, build: BUILD, id: o.id, site: o.site || null, title: o.title, delivery: o.delivery, where: o.where_,
+    price_cents: o.cents, price: money(o.cents), buyer_fee_cents: f.buyer_cents, buyer_pays_cents: o.cents + f.buyer_cents, buyer_pays: money(o.cents + f.buyer_cents),
+    payable: !!o.achpay, by: { id: o.sid, name: o.name, city: o.city, country: o.country, photo: (origin || "") + "/?photo=" + o.sid } };
+}
+
 /* THE HOST REACHES THEIR GUESTS. His ask, 20 Sep: a list of telephone
    numbers so the coordinator can text and email a message — texting through
    the creator's own phone, in small bulk. So: the numbers and the emails of
@@ -1900,7 +2017,8 @@ function sniff(bytes) {
    through the event they belong to. */
 const PIC = { seller: { table: "gp_sellers", prefix: "seller", q: "photo", live: " AND state='verified'" },
               attendee: { table: "gp_attendees", prefix: "attendee", q: "apic", live: "" },
-              event: { table: "gp_events", prefix: "event", q: "epic", live: "" } };
+              event: { table: "gp_events", prefix: "event", q: "epic", live: "" },
+              product: { table: "gp_products", prefix: "product", q: "ppic", live: "" } };
 async function putPhoto(env, me, req, origin, which) {
   const p = PIC[which || "seller"];
   if (!env.IMG) return { ok:false, error:"no IMG binding" };

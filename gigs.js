@@ -1,4 +1,4 @@
-/* BUILT 2026-09-21 · gigapoo gigs.js 1f (1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
+/* BUILT 2026-09-21 · gigapoo gigs.js 1g (1g: Buy by card on every offer through the pay desk — Stripe on everything; 1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
    BUILT 2026-09-20 · gigapoo gigs.js 1d
    (1d: a fifth door, Events — paid events held by verified sellers, tickets
     reserved by named people with a telephone; a job option on "I need
@@ -43,6 +43,10 @@
      rule for Wise Sleuth, 21 Sep: the data and the pattern are what the
      house learns from. */
   var SCENARIO = !!(me && me.getAttribute("data-scenario"));
+  /* the pay desk — Stripe on everything, 21 Sep. A gig is bought by card with
+     one link; Stripe asks for the email; the desk books the sale on the engine. */
+  var PAY = (me && me.getAttribute("data-pay")) || "https://pay.warrantwire.com";
+  var ON = { wire: "wire", k8: "k8", wisesleuth: "ws" }[SITE] || "gp";
 
   /* ---- the dress ---------------------------------------------------------- */
   var CSS = ''
@@ -195,7 +199,7 @@
           + '<span>' + esc(o.delivery === "text" ? "written" : o.delivery === "voice" ? "written + voice" : o.delivery === "own" ? "written + own voice" : o.delivery === "file" ? "a file" : "in person") + '</span>'
           + (o.days ? '<span>about ' + o.days + ' day' + (o.days === 1 ? '' : 's') + '</span>' : '') + (o.advice ? '<span class="pill">advice · licensed</span>' : '<span>opinion, not advice</span>') + '</div>'
           + '<div class="meta"><span class="price">' + esc(o.buyer_pays) + ' <small>' + esc(o.price) + ' to the seller + our flat fee</small></span>'
-          + '<button class="btn" data-ask="' + esc(o.id) + '" data-ask-title="' + esc(o.title) + '" data-ask-where="' + esc(o.where) + '">Ask for this</button></div></div></div>';
+          + '<a class="btn" href="' + PAY + '/?go=gig&gig=' + esc(o.id) + '&collect_email=1&on=' + ON + '" style="text-decoration:none">Buy &middot; ' + esc(o.buyer_pays) + '</a> <button class="btn quiet" data-ask="' + esc(o.id) + '" data-ask-title="' + esc(o.title) + '" data-ask-where="' + esc(o.where) + '">Ask first</button></div></div></div>';
       }).join("") + '</div>';
       pane.querySelectorAll("[data-ask]").forEach(function (b) {
         b.addEventListener("click", function () { pick("need"); needForm({ subject: b.getAttribute("data-ask-title"), where: b.getAttribute("data-ask-where"), offer: b.getAttribute("data-ask") }); });
