@@ -962,9 +962,20 @@ async function profile(env, id, origin) {
   const r = await env.OVERHANG.prepare("SELECT stars, words, buyer_name, made FROM gp_ratings WHERE seller_id = ? ORDER BY made DESC LIMIT 50").bind(id).all();
   const o = await env.OVERHANG.prepare("SELECT * FROM gp_offers WHERE seller_id = ? AND state = 'live' ORDER BY made DESC LIMIT 50").bind(id).all();
   const f = await fees(env);
+  /* ⚠ THE PROFILE IS THE RECORD. His rule, 21 Sep: "everyone needs a profile
+     still" — the work delivered, the events held, every review as written,
+     under the person's own name. A record of your own is how value gets seen. */
+  const ev = await env.OVERHANG.prepare(EVENT_SQL + " WHERE e.host_id = ? AND e.state = 'live' ORDER BY e.starts DESC LIMIT 30").bind(id).all();
+  const hostRev = await env.OVERHANG.prepare("SELECT stars, words, by_name, made FROM gp_reviews WHERE about = ? ORDER BY made DESC LIMIT 50").bind("host:" + id).all();
+  const done = await env.OVERHANG.prepare("SELECT COUNT(*) n, SUM(CASE WHEN event_id IS NOT NULL THEN 1 ELSE 0 END) tickets FROM gp_sales WHERE seller_id = ? AND state IN ('paid','released')").bind(id).first();
+  const events = (ev.results || []).map(v => pubEvent(v, f, origin));
   return { ok:true, build: BUILD, seller: pubSeller(x, origin),
     reviews: (r.results || []).map(v => ({ stars: v.stars, said: v.words, by: v.buyer_name, on: v.made })),
-    offers: (o.results || []).map(v => pubOffer(v, f)) };
+    as_host: Object.assign(await starsOf(env, "host:" + id), { reviews: (hostRev.results || []).map(v => ({ stars: v.stars, said: v.words, by: v.buyer_name || v.by_name, on: v.made })) }),
+    offers: (o.results || []).map(v => pubOffer(v, f)),
+    events: events.filter(e => Date.parse(String(e.starts)) >= Date.now() - 6 * 3600000),
+    past_events: events.filter(e => Date.parse(String(e.starts)) < Date.now() - 6 * 3600000),
+    record: { jobs_delivered: Number(done && done.n) || 0, tickets_sold: Number(done && done.tickets) || 0, events_held: events.length, member_since: x.verified || x.applied } };
 }
 
 /* ============================================================

@@ -1,4 +1,5 @@
-/* BUILT 2026-09-20 · gigapoo gigs.js 1d
+/* BUILT 2026-09-21 · gigapoo gigs.js 1e (1e: every name links to the person's profile page — data-profile= sets the base)
+   BUILT 2026-09-20 · gigapoo gigs.js 1d
    (1d: a fifth door, Events — paid events held by verified sellers, tickets
     reserved by named people with a telephone; a job option on "I need
     someone" with a rate; "free has no value" said on every form)
@@ -35,6 +36,8 @@
   var API  = ((me && me.getAttribute("data-api")) || "https://api.gigapoo.com").replace(/\/$/, "");
   var INTO = (me && me.getAttribute("data-into")) || "#gigs";
   var TOKEN_KEY = "gigapoo.token";
+  /* every name is a link to the person's profile — the record under their own name */
+  var PROFILE = (me && me.getAttribute("data-profile")) || "https://gigapoo.com/profile?id=";
 
   /* ---- the dress ---------------------------------------------------------- */
   var CSS = ''
@@ -170,7 +173,7 @@
   function sellerHead(by) {
     var loc = by.location || {};
     return '<div class="face">' + (by.photo ? '<img src="' + esc(by.photo) + '" alt="">' : esc(initials(by.name))) + '</div>'
-      + '<div><div class="who"><b>' + esc(by.name) + '</b><span class="loc">' + esc(by.city || loc.city) + ', ' + esc(by.country || loc.country) + '</span>'
+      + '<div><div class="who"><b><a href="' + PROFILE + esc(by.id) + '" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--gp-ink3)">' + esc(by.name) + '</a></b><span class="loc">' + esc(by.city || loc.city) + ', ' + esc(by.country || loc.country) + '</span>'
       + '<span class="ok' + (loc.stale ? ' stale' : '') + '">' + (loc.stale ? 'location not confirmed' : (loc.nomad ? 'on the move · location on' : 'verified')) + '</span>'
       + (by.credential ? '<span class="pill">' + esc(by.credential) + '</span>' : '') + '</div>' + stars(by);
   }
@@ -179,7 +182,7 @@
     get(API + "/?offers=1&site=" + encodeURIComponent(SITE)).then(function (d) {
       var list = (d && d.offers) || [];
       if (!list.length) { pane.innerHTML = '<div class="meta" style="margin:0 0 10px"><a href="#" id="gp-selmap" class="pill">Map of gig workers nearby</a></div><div id="gp-selmaph"></div><div class="empty"><b>Nobody has posted an offer here yet.</b><br>Be the first — <a href="#" data-go="sell">say what you can do</a>, or <a href="#" data-go="need">post what you need</a> and let people bid.</div>'; wireGo();
-        pane.querySelector("#gp-selmap").addEventListener("click", function (e) { e.preventDefault(); var h = pane.querySelector("#gp-selmaph"); if (h.innerHTML) { h.innerHTML = ""; return; } drawMap(h, "sellers", function (id) { window.open(API + "/?seller=" + id, "_blank"); }); }); return; }
+        pane.querySelector("#gp-selmap").addEventListener("click", function (e) { e.preventDefault(); var h = pane.querySelector("#gp-selmaph"); if (h.innerHTML) { h.innerHTML = ""; return; } drawMap(h, "sellers", function (id) { location.href = PROFILE + id; }); }); return; }
       pane.innerHTML = '<div class="meta" style="margin:0 0 10px"><a href="#" id="gp-selmap" class="pill">Map of gig workers nearby</a></div><div id="gp-selmaph"></div><div class="list">' + list.map(function (o) {
         return '<div class="card">' + sellerHead(o.by)
           + '<div class="title">' + esc(o.title) + '</div>' + (o.blurb ? '<p class="blurb">' + esc(o.blurb) + '</p>' : '') + '</div>'
@@ -192,7 +195,7 @@
       pane.querySelectorAll("[data-ask]").forEach(function (b) {
         b.addEventListener("click", function () { pick("need"); needForm({ subject: b.getAttribute("data-ask-title"), where: b.getAttribute("data-ask-where"), offer: b.getAttribute("data-ask") }); });
       });
-      pane.querySelector("#gp-selmap").addEventListener("click", function (e) { e.preventDefault(); var h = pane.querySelector("#gp-selmaph"); if (h.innerHTML) { h.innerHTML = ""; return; } drawMap(h, "sellers", function (id) { var c = pane.querySelector('[data-ask]'); window.open(API + "/?seller=" + id, "_blank"); }); });
+      pane.querySelector("#gp-selmap").addEventListener("click", function (e) { e.preventDefault(); var h = pane.querySelector("#gp-selmaph"); if (h.innerHTML) { h.innerHTML = ""; return; } drawMap(h, "sellers", function (id) { location.href = PROFILE + id; }); });
     }).catch(function () { pane.innerHTML = '<div class="warn">The market is not answering just now. Try again in a moment.</div>'; });
   }
   function wireGo() { pane.querySelectorAll("[data-go]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); pick(a.getAttribute("data-go")); show(a.getAttribute("data-go")); }); }); }
@@ -295,7 +298,7 @@
       + '<div><div class="title">' + esc(ev.title) + '</div>'
       + '<div class="meta">' + (ev.kind ? '<span class="pill" style="background:var(--gp-orange);color:#fff">' + esc(ev.kind) + '</span>' : '') + '<span class="pill place">' + when(ev.starts) + '</span><span class="pill">' + esc(ev.where) + (ev.venue ? ' · ' + esc(ev.venue) : '') + '</span>'
       + (ev.seats ? '<span>' + ev.going + ' going · ' + ev.left + ' of ' + ev.seats + ' seats left</span>' : '<span>' + ev.going + ' going</span>')
-      + (h.name ? '<span>held by <b>' + esc(h.name) + '</b>' + (h.city ? ', ' + esc(h.city) : '') + '</span>' : '') + '</div>'
+      + (h.name ? '<span>held by <b><a href="' + PROFILE + esc(h.id) + '" style="color:inherit">' + esc(h.name) + '</a></b>' + (h.city ? ', ' + esc(h.city) : '') + '</span>' : '') + '</div>'
       + (ev.blurb ? '<p class="blurb" style="margin-top:6px">' + esc(ev.blurb) + '</p>' : '')
       + (ev.map ? '<div class="meta"><a href="' + esc(ev.map) + '" target="_blank" rel="noopener">Map</a> · <a href="' + esc(ev.directions) + '" target="_blank" rel="noopener">Directions</a></div>' : '')
       + (full && ev.map_embed ? '<iframe src="' + esc(ev.map_embed) + '" style="width:100%;height:220px;border:0;border-radius:10px;margin-top:8px" loading="lazy" title="map"></iframe>' : '')
@@ -461,7 +464,7 @@
       + '<div class="f2"><div><label for="gp-s-city">City</label><input id="gp-s-city" autocomplete="address-level2"></div><div><label for="gp-s-country">Country</label><input id="gp-s-country" autocomplete="country-name" placeholder="USA"></div></div>'
       + '<div class="check"><input id="gp-s-nomad" type="checkbox"><label for="gp-s-nomad" style="text-transform:none;letter-spacing:0;font:14px var(--gp-sans);color:var(--gp-ink2)"><b>I move around — no fixed address.</b> I will keep my location on and check in monthly.</label></div>'
       + '<div class="row"><button class="btn quiet" type="button" id="gp-s-locate">Use my location</button><span class="hint" id="gp-s-locmsg">Optional for a fixed address; required if you move around. The exact point is never published — only your city and country.</span></div>'
-      + '<div><label for="gp-s-about">About you, in a few lines</label><textarea id="gp-s-about" rows="2" placeholder="what you do, how long you have done it"></textarea></div>'
+      + '<div><label for="gp-s-about">About you, in a few lines &mdash; the first thing on your profile</label><textarea id="gp-s-about" rows="3" placeholder="what you can figure out, how long you have done it, what you want to be hired for"></textarea><p class="hint">Everyone here has a profile under their own name: the work delivered, the events held, every review as written. It is your record; it is how your value gets seen.</p></div>'
       + '<div class="rule" style="background:var(--gp-sky2);border-color:var(--gp-line);color:var(--gp-ink2)"><b>What you can do</b> — your first offer, in your own words. You can add more once you are verified.</div>'
       + '<div><label for="gp-s-title">The task</label><input id="gp-s-title" placeholder="I will read your company&rsquo;s warrant agreement and tell you what it permits"></div>'
       + '<div class="f2"><div><label for="gp-s-price">Your price, in dollars</label><input id="gp-s-price" type="number" min="1" step="1" placeholder="150"></div><div><label for="gp-s-where">Where</label><select id="gp-s-where"><option value="remote">remote — over the wire</option><option value="in_place">in person — at the buyer&rsquo;s address</option></select></div></div>'
@@ -506,7 +509,7 @@
       var first = null; try { first = JSON.parse(localStorage.getItem("gigapoo.first_offer") || "null"); } catch (x) {}
       pane.innerHTML = '<div class="list">'
         + '<div class="card">' + sellerHead(you) + '<div class="meta">' + esc(loc.says || "") + ' ' + (you.location && you.location.nomad ? '<button class="btn quiet" id="gp-checkin" style="padding:6px 10px;font-size:13px">Check in — I am here now</button>' : '') + '</div></div>'
-        + '<div class="row"><span class="hint">Sales released: ' + (d.sales ? d.sales.released : 0) + ' · earned ' + esc(d.sales ? d.sales.earned : "$0") + '</span><button class="btn quiet" id="gp-signout" style="padding:6px 10px;font-size:13px">Forget this token</button></div></div>'
+        + '<div class="row"><span class="hint">Sales released: ' + (d.sales ? d.sales.released : 0) + ' · earned ' + esc(d.sales ? d.sales.earned : "$0") + '</span><a class="btn quiet" href="' + PROFILE + esc(you.id) + '" style="padding:6px 10px;font-size:13px;text-decoration:none">My profile</a> <button class="btn quiet" id="gp-signout" style="padding:6px 10px;font-size:13px">Forget this token</button></div></div>'
         + '<form id="gp-offer"><div class="rule"><b>Add what you can do.</b> Your words, your price. It shows with your name and city.</div>'
         + '<div><label for="gp-o-title">The task</label><input id="gp-o-title" value="' + esc(first ? first.title : "") + '"></div>'
         + '<div><label for="gp-o-blurb">A line or two more (optional)</label><input id="gp-o-blurb"></div>'

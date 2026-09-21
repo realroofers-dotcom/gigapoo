@@ -15,6 +15,7 @@ export default {
     const url = new URL(request.url);
     let path = url.pathname;
     if (path === "/" || path === "/index.html" || path === "/wisesleuth" || path === "/wisesleuth.html") path = "/wisesleuth.html";
+    if (path === "/profile") path = "/profile.html";   /* a member's profile, at the club's own address */
     const upstream = await fetch(HOME + path + url.search, { headers: { "User-Agent": "wisesleuth.com/1a", "Accept": request.headers.get("Accept") || "*/*" }, cf: { cacheTtl: 300 } });
     const h = new Headers(upstream.headers);
     h.set("Cache-Control", "public, max-age=300");
