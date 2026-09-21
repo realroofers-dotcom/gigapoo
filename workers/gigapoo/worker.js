@@ -350,6 +350,9 @@ export default {
         if (q.get("products")) return json(await products(env, q, u.origin), H);
         if (q.get("product"))  return json(await oneProduct(env, q.get("product"), u.origin), H);
         if (q.get("offer"))    return json(await oneOffer(env, q.get("offer"), u.origin), H);
+        if (q.get("bid"))      return json(await oneBid(env, q.get("bid"), u.origin), H);
+        if (q.get("ticket"))   return json(await oneTicket(env, q.get("ticket")), H);
+        if (q.get("invoice"))  return json(await oneInvoice(env, q.get("invoice")), H);
         if (q.get("ppic"))     return await servePhoto(env, q.get("ppic"), "product");
         if (q.get("seller"))  return json(await profile(env, q.get("seller"), u.origin), H);
         if (q.get("request")) return json(await oneRequest(env, q.get("request")), H);
@@ -734,8 +737,8 @@ async function gate(env, key) {
     `SELECT id, half, due_cents, issued FROM gp_invoices
       WHERE site = ? AND state = 'open' AND issued <= datetime('now', ?) ORDER BY issued LIMIT 1`)
     .bind(key, "-" + (Number(f.late_days) || 180) + " days").first();
-  if (late) return { key, off:true, invoice: late.id,
-    why: "This market is paused: Gigapoo's bill for " + late.half + " (" + money(late.due_cents) + ", issued " + String(late.issued).slice(0, 10) + ") is more than " + (Number(f.late_days) || 180) + " days unpaid. It comes back the day it is paid." };
+  if (late) return { key, off:true, invoice: late.id, pay: "https://pay.warrantwire.com/?go=bill&invoice=" + late.id + "&collect_email=1&on=gp",
+    why: "This market is paused: Gigapoo's bill for " + late.half + " (" + money(late.due_cents) + ", issued " + String(late.issued).slice(0, 10) + ") is more than " + (Number(f.late_days) || 180) + " days unpaid. It comes back the minute it is paid — by card at pay.warrantwire.com/?go=bill&invoice=" + late.id + "&collect_email=1&on=gp" };
   return { key, off:false };
 }
 async function siteInfo(env, key) {
@@ -1179,7 +1182,9 @@ async function oneRequest(env, id) {
     request: { id: x.id, site: x.site, subject: x.subject, note: x.note, where: x.where_, budget: x.budget_cents ? money(x.budget_cents) : null,
       near: x.where_ === "in_place" && x.city ? x.city + ", " + x.country : null, by: String(x.buyer_name || "").split(/\s+/)[0], state: x.state, made: x.made },
     bids: (b.results || []).map(v => ({ id: v.id, by: { id: v.sid, name: v.name, city: v.city, country: v.country, credential: v.credential || null },
-      price: money(v.cents), delivery: v.delivery, note: v.note, made: v.made })) };
+      price: money(v.cents), delivery: v.delivery, note: v.note, made: v.made,
+      /* accept it by paying it — by card, through the pay desk */
+      pay: "https://pay.warrantwire.com/?go=gig&bid=" + v.id + "&collect_email=1&on=" + ({ wire:"wire", k8:"k8", wisesleuth:"ws" }[x.site] || "gp") })) };
 }
 /* the scenarios, whole, newest first — the data the house learns from:
    what people need looked into, how they describe it, what they would pay,
@@ -1699,6 +1704,35 @@ async function shipped(env, site, q) {
   const r = await env.OVERHANG.prepare("UPDATE gp_orders SET state='shipped', tracking=?, shipped_at=datetime('now') WHERE id=? AND site=?").bind(clean(q.get("tracking")) || null, id, site.key).run();
   return { ok:true, build: BUILD, order: Number(id), shipped: !!(r.meta && r.meta.changes) };
 }
+/* ⚠ STRIPE WHEREVER MONEY MOVES — his call, 21 Sep: "do the Stripe wherever
+   missing; that is the part that makes me nervous." Three more things the pay
+   desk can price from here and take by card: a BID on a request (the buyer
+   accepts it and pays), a TICKET the host has approved (pay now by card
+   instead of carrying it on credit), and a SITE'S INVOICE (the half-year bill,
+   paid by card, the market never switched off). */
+async function oneBid(env, id, origin) {
+  const b = await env.OVERHANG.prepare(`SELECT b.*, r.subject, r.site, r.where_ rwhere, r.buyer_email, s.id sid, s.name, s.city, s.country, s.achpay, s.state sstate
+     FROM gp_bids b JOIN gp_requests r ON r.id = b.request_id JOIN gp_sellers s ON s.id = b.seller_id WHERE b.id = ?`).bind(id).first();
+  if (!b || b.state !== "open" || b.sstate !== "verified") return { ok:false, error:"no such bid, or it is closed" };
+  const f = await fees(env);
+  return { ok:true, build: BUILD, id: b.id, request: b.request_id, site: b.site || null, title: b.subject, delivery: b.delivery, where: b.rwhere,
+    price_cents: b.cents, price: money(b.cents), buyer_fee_cents: f.buyer_cents, buyer_pays_cents: b.cents + f.buyer_cents, buyer_pays: money(b.cents + f.buyer_cents),
+    payable: !!b.achpay, buyer_email: b.buyer_email || null, by: { id: b.sid, name: b.name, city: b.city, country: b.country, photo: (origin || "") + "/?photo=" + b.sid } };
+}
+async function oneTicket(env, id) {
+  const t = await env.OVERHANG.prepare("SELECT t.*, e.title, e.starts, e.site, e.cents, e.host_id FROM gp_tickets t JOIN gp_events e ON e.id = t.event_id WHERE t.id = ?").bind(id).first();
+  if (!t) return { ok:false, error:"no such ticket" };
+  const f = await fees(env), seats = Number(t.seats) || 1, total = (t.cents + Number(f.ticket_buyer_cents || 0)) * seats;
+  return { ok:true, build: BUILD, id: t.id, event: t.event_id, title: t.title, starts: t.starts, site: t.site || null, seats, state: t.state,
+    payable_now: t.state === "approved", paid: t.state === "paid", buyer_email: t.email, name: t.name,
+    price_cents: t.cents * seats, buyer_pays_cents: total, buyer_pays: money(total) };
+}
+async function oneInvoice(env, id) {
+  const v = await env.OVERHANG.prepare("SELECT v.*, s.name FROM gp_invoices v JOIN gp_sites s ON s.key = v.site WHERE v.id = ?").bind(id).first();
+  if (!v) return { ok:false, error:"no such invoice" };
+  return { ok:true, build: BUILD, id: v.id, site: v.site, site_name: v.name, half: v.half, gross: money(v.gross_cents), rate: pct(v.rate_bps),
+    due_cents: v.due_cents, due: money(v.due_cents), issued: String(v.issued).slice(0, 10), due_by: String(v.due_by).slice(0, 10), state: v.state, payable_now: v.state === "open" };
+}
 /* one offer, priced, for the pay desk: what the buyer pays, and whether the seller can be paid */
 async function oneOffer(env, id, origin) {
   const o = await env.OVERHANG.prepare("SELECT o.*, s.id sid, s.name, s.city, s.country, s.achpay, s.state sstate FROM gp_offers o JOIN gp_sellers s ON s.id = o.seller_id WHERE o.id = ?").bind(id).first();
@@ -1841,7 +1875,9 @@ function pubInvoice(v) {
   const overdue = v.state === "open" && Date.now() > Date.parse(String(v.due_by).replace(" ", "T") + "Z");
   return { id: v.id, half: v.half, sales: v.sales, gross: money(v.gross_cents), rate: pct(v.rate_bps), due: money(v.due_cents),
     issued: String(v.issued).slice(0, 10), due_by: String(v.due_by).slice(0, 10), state: v.state, paid_at: v.paid_at || null,
-    days_since_issued: days, overdue, note: v.note || null };
+    days_since_issued: days, overdue, note: v.note || null,
+    /* pay it by card, now — the market is never switched off over a bill that can be paid in a minute */
+    pay: v.state === "open" ? "https://pay.warrantwire.com/?go=bill&invoice=" + v.id + "&collect_email=1&on=gp" : null };
 }
 
 async function ledger(env, site) {
@@ -1882,6 +1918,15 @@ async function sale(env, site, q) {
         guest: ticket.name, seats: ticket.seats, this_half: { gross: h0.gross, sales: h0.sales, gigapoo_is_owed_so_far: h0.due + " (" + h0.rate + ")" } };
     }
     sellerId = ticket.host_id; eventId = ticket.event_id; amount = amount || ticket.cents * (ticket.seats || 1); buyerEmail = buyerEmail || ticket.email;
+  }
+  /* a bid accepted and paid: the seller and the request come off the bid; the bid closes, the request too */
+  if (q.get("bid")) {
+    const b = await env.OVERHANG.prepare("SELECT * FROM gp_bids WHERE id = ?").bind(q.get("bid")).first();
+    if (!b) return { ok:false, error:"no such bid" };
+    sellerId = b.seller_id; amount = amount || b.cents;
+    await env.OVERHANG.prepare("UPDATE gp_bids SET state='taken' WHERE id=?").bind(b.id).run();
+    await env.OVERHANG.prepare("UPDATE gp_requests SET state='taken' WHERE id=?").bind(b.request_id).run();
+    q.set("request", String(b.request_id)); if (!q.get("delivery") && b.delivery) q.set("delivery", b.delivery);
   }
   if (!sellerId) return { ok:false, error:"which seller?" };
   if (!amount) return { ok:false, error:"the price paid, in dollars. " + NOTHING_FREE };

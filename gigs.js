@@ -1,4 +1,4 @@
-/* BUILT 2026-09-21 · gigapoo gigs.js 1g (1g: Buy by card on every offer through the pay desk — Stripe on everything; 1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
+/* BUILT 2026-09-21 · gigapoo gigs.js 1h (1h: Stripe wherever money moves — an approved ticket paid now by card, a bid taken by paying it; 1g: Buy by card on every offer through the pay desk — Stripe on everything; 1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
    BUILT 2026-09-20 · gigapoo gigs.js 1d
    (1d: a fifth door, Events — paid events held by verified sellers, tickets
     reserved by named people with a telephone; a job option on "I need
@@ -222,11 +222,23 @@
           + (r.scenario ? '<p class="blurb"><b>The scenario:</b> ' + esc(String(r.scenario).slice(0, 400)) + (String(r.scenario).length > 400 ? '…' : '') + (r.wanted ? '<br><b>Wanted:</b> ' + esc(r.wanted) : '') + '</p>' : '')
           + '<div class="meta">' + (r.topic ? '<span class="pill">' + esc(r.topic) + '</span>' : '') + (r.kind === "job" ? '<span class="pill" style="background:var(--gp-orange);color:#fff">job · ' + esc(r.rate || '') + '</span>' : '') + (r.anyone ? '<span class="pill" style="background:#e8f6ef;color:#1d5a3f">anyone could do this</span>' : '') + '<span class="pill' + (r.where === "in_place" ? ' place' : '') + '">' + (r.where === "in_place" ? 'in person' + (r.near ? ' · ' + esc(r.near) : '') : 'remote') + '</span>'
           + '<span>asked by ' + esc(r.by) + (r.buyer_verified ? ' · verified' : '') + (r.buyer_stars ? ' · ★ ' + r.buyer_stars + ' (' + r.buyer_reviews + ')' : '') + '</span>' + (r.budget ? '<span>budget ' + esc(r.budget) + '</span>' : '') + '<span>' + r.bids + ' bid' + (r.bids === 1 ? '' : 's') + '</span></div></div>'
-          + '<div class="row"><span class="hint">' + esc(String(r.made).slice(0, 10)) + '</span>'
-          + (tok ? '<button class="btn quiet" data-bid="' + esc(r.id) + '" data-bid-subject="' + esc(r.subject) + '">Bid on this</button>' : '<span class="hint">Verified sellers bid here — <a href="#" data-go="sell">enrol</a> or paste your token under Sell here.</span>') + '</div></div>';
+          + '<div class="row"><span class="hint">' + esc(String(r.made).slice(0, 10)) + (r.bids ? ' · <a href="#" data-bids="' + esc(r.id) + '">see the bids &amp; pay one</a>' : '') + '</span>'
+          + (tok ? '<button class="btn quiet" data-bid="' + esc(r.id) + '" data-bid-subject="' + esc(r.subject) + '">Bid on this</button>' : '<span class="hint">Verified sellers bid here — <a href="#" data-go="sell">enrol</a> or paste your token under Sell here.</span>') + '</div><div class="bids" data-for="' + esc(r.id) + '" style="grid-column:1/-1"></div></div>';
       }).join("") + '</div>';
       wireGo();
       pane.querySelectorAll("[data-bid]").forEach(function (b) { b.addEventListener("click", function () { bidForm(b.getAttribute("data-bid"), b.getAttribute("data-bid-subject")); }); });
+      /* the bids on a request: the person who asked accepts one by paying it, by card */
+      pane.querySelectorAll("[data-bids]").forEach(function (a) {
+        a.addEventListener("click", function (e) {
+          e.preventDefault(); var id = a.getAttribute("data-bids"), box = pane.querySelector('.bids[data-for="' + id + '"]'); box.innerHTML = '<p class="hint">Loading the bids…</p>';
+          get(API + "/?request=" + encodeURIComponent(id)).then(function (d) {
+            var bs = (d && d.bids) || [];
+            box.innerHTML = bs.length ? '<div class="rule" style="margin-top:8px"><b>' + bs.length + ' bid' + (bs.length === 1 ? '' : 's') + '.</b> If this is your request, take one by paying it — by card, held until the work is delivered.</div>' + bs.map(function (b) {
+              return '<div class="meta" style="padding:8px 0;border-top:1px solid var(--gp-line);gap:10px"><b><a href="' + PROFILE + esc(b.by.id) + '" style="color:inherit">' + esc(b.by.name) + '</a></b><span>' + esc(b.by.city) + '</span>' + (b.note ? '<span>' + esc(b.note) + '</span>' : '') + '<span class="price">' + esc(b.price) + '</span><a class="btn" href="' + esc(b.pay) + '" style="text-decoration:none;padding:6px 12px;font-size:13px">Take it &middot; pay by card</a></div>';
+            }).join("") : '<p class="hint">No bids yet.</p>';
+          });
+        });
+      });
     }).catch(function () { pane.innerHTML = '<div class="warn">The market is not answering just now.</div>'; });
   }
   function bidForm(rid, subject) {
@@ -369,7 +381,9 @@
     function askForm(me, mine_) {
       var held = (mine_ || []).filter(function (t) { return String(t.event) === String(ev.id) && (t.state === "approved" || t.state === "paid"); })[0];
       if (held) {
-        box.innerHTML = '<div class="done"><b>You are in' + (held.paid ? ', paid.' : ' — ' + esc(held.owed || "") + ' on your credit line, settles by ACH.') + '</b> <a href="#" id="gp-rev-host">Review the host</a> — 140 characters, published as written.</div>';
+        box.innerHTML = '<div class="done"><b>You are in' + (held.paid ? ', paid.' : ' — ' + esc(held.owed || "") + ' on your credit line.') + '</b> '
+          + (held.paid ? '' : '<a class="btn" href="' + PAY + '/?go=ticket&ticket=' + esc(held.ticket) + '&collect_email=1&on=' + ON + '" style="text-decoration:none;margin:0 8px">Pay now by card &middot; ' + esc(held.owed || "") + '</a> <span class="hint">or settle it by ACH later — no interest.</span> ')
+          + '<a href="#" id="gp-rev-host">Review the host</a> — 140 characters, published as written.</div>';
         box.querySelector("#gp-rev-host").addEventListener("click", function (e) {
           e.preventDefault(); var stars = prompt("Stars, 1 to 5:"); if (!stars) return; var words = prompt("In 140 characters or fewer:") || "";
           if (words.length > 140) { alert("140 characters at most — yours is " + words.length + "."); return; }
@@ -617,7 +631,7 @@
               gl.querySelectorAll("[data-yes],[data-no]").forEach(function (x) {
                 x.addEventListener("click", function () {
                   var yes = x.hasAttribute("data-yes");
-                  get(API + "/?" + q({ action: yes ? "approve" : "decline", token: tok, ticket: x.getAttribute(yes ? "data-yes" : "data-no") })).then(function (r) { alert(r.ok ? (yes ? "In. " + (r.on_credit ? r.on_credit + " on their credit line; you receive " + r.you_receive + " by ACH when it clears." : "") : "Declined.") : (r.error || "did not go through")); b.click(); });
+                  get(API + "/?" + q({ action: yes ? "approve" : "decline", token: tok, ticket: x.getAttribute(yes ? "data-yes" : "data-no") })).then(function (r) { alert(r.ok ? (yes ? "In. " + (r.on_credit ? r.on_credit + " on their credit line — they can pay it by card now on the event page, or by ACH later; you receive " + r.you_receive + " when it clears." : "") : "Declined.") : (r.error || "did not go through")); b.click(); });
                 });
               });
             });
