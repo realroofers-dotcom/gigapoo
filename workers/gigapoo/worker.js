@@ -68,13 +68,13 @@
      email, to be verified by the event creator. Attendees can get a credit
      line; the event creators take the risk of receiving payment and so
      does Gigapoo — but it's better to receive larger payments — and they
-     should be paid with achpay.com."
+     should be paid with achplug.com."
        So an ATTENDEE registers once (gp_attendees): full name, email,
      telephone, AND A PICTURE — no picture, no ticket. They ask to attend;
      the HOST sees the name, the picture and the email and approves or
      declines. Approval is the credit line: the ticket is a sale on the
      site's books at once, in state 'credit' — owed, not yet received. It
-     settles by ACH through achpay.com (?action=sale&ticket=… flips it to
+     settles by ACH through achplug.com (?action=sale&ticket=… flips it to
      'paid'). The half-year bill counts credit sales as sales: the host and
      the house carry the risk together, and a larger payment received is
      worth the wait. Seats are taken by approved and paid tickets; requests
@@ -119,13 +119,13 @@
      seller (?action=rate) is the same table with the same cap.
 
    ⚠ STRIPE IN, ACHPAY OUT. His rule, 20 Sep: "implement Stripe for gig
-     workers, except they must also have achpay.com to receive our payment;
+     workers, except they must also have achplug.com to receive our payment;
      they absorb the Stripe fees." So a gig is paid by card through Stripe
      Checkout (?action=checkout&key=<site>&offer=…); Stripe's webhook
      (POST ?stripe=1, signature checked) puts the sale on the books with
      rail 'stripe' and Stripe's fee (gp_fees.stripe_bps + stripe_fixed_cents,
      2.9% + 30¢ by default) charged to the SELLER, not the buyer. Payout is
-     by ACH through achpay.com only: a seller's achpay address is on their
+     by ACH through achplug.com only: a seller's achpay address is on their
      profile (join: achpay=…, or ?action=bank&token=…&achpay=…) and
      ?action=payout refuses without it. Event tickets never touch Stripe —
      they are credit, settled by ACH.
@@ -226,7 +226,7 @@
                              of who is coming, with sms: and mailto: links to send one
                              message from the host's own phone (small bulk)
      ?action=where&token=…   check in: city, country, [region, lat, lng]
-     ?action=bank&token=…&achpay=<your achpay.com address>   where Gigapoo pays you
+     ?action=bank&token=…&achpay=<your achplug.com address>   where Gigapoo pays you
      ?action=me&token=…      what is mine
      ?action=photo&token=…   POST the image as the body
 
@@ -264,7 +264,7 @@
 
 const BUILD = "gigapoo-1d · 2026-09-20 · the engine: gigs, jobs and paid events on every site's books; attendees registered and verified by the host; credit settled by ACH; nothing is free";
 const NOTHING_FREE = "Free has no value here. Every gig, job and event carries a price.";
-const ACH = "achpay.com";   /* the rail tickets settle on — his call, 20 Sep */
+const ACH = "achplug.com";   /* the rail tickets settle on — his call, 20 Sep */
 /* HIS RULE, 20 Sep, on meetups: "people want for free but that costs time and
    problems. The minimum price to attend an event is $5; we get 5% of the
    6-month total; if the attendee signs up they have to agree to pay for their
@@ -635,7 +635,7 @@ async function setup(env) {
        state TEXT DEFAULT 'requested',            /* requested | approved (credit) | paid | declined | cancelled */
        sale_id INTEGER, decided TEXT, made TEXT DEFAULT (datetime('now')),
        UNIQUE (event_id, email))`).run();
-  await add("ALTER TABLE gp_sales ADD COLUMN rail TEXT");   /* 'achpay.com' on tickets */
+  await add("ALTER TABLE gp_sales ADD COLUMN rail TEXT");   /* 'achplug.com' on tickets */
   await add("ALTER TABLE gp_events ADD COLUMN photo_key TEXT");   /* the promotional picture, in the header */
   await add("ALTER TABLE gp_tickets ADD COLUMN agreed TEXT");     /* when the attendee agreed to pay */
   await add("ALTER TABLE gp_attendees ADD COLUMN hometown TEXT");
@@ -1234,7 +1234,7 @@ async function mine(env, me, origin) {
     offers: (o.results || []).map(v => pubOffer(v, f)), bids: b.results || [],
     events: (ev.results || []).map(v => pubEvent(v, f, origin)),
     sales: { released: Number(s && s.n) || 0, earned: money(Number(s && s.earned) || 0) },
-    paid_through: me.achpay ? ACH + " · " + me.achpay : "nothing on file — add your achpay.com address (?action=bank) or you cannot be paid" };
+    paid_through: me.achpay ? ACH + " · " + me.achpay : "nothing on file — add your achplug.com address (?action=bank) or you cannot be paid" };
 }
 
 /* ============================================================
@@ -1597,10 +1597,10 @@ async function digest(env, q, origin) {
     digest: out };
 }
 
-/* where Gigapoo pays the seller: their achpay.com address */
+/* where Gigapoo pays the seller: their achplug.com address */
 async function bank(env, me, q) {
   const a = shorten(q.get("achpay"), 120);
-  if (!a) return { ok:false, error:"your achpay.com address (the email or handle achpay knows you by)" };
+  if (!a) return { ok:false, error:"your achplug.com address (the email or handle achpay knows you by)" };
   await env.OVERHANG.prepare("UPDATE gp_sellers SET achpay=?, us_bank=1 WHERE id=?").bind(a, me.id).run();
   return { ok:true, build: BUILD, achpay: a, note:"On file. Gigapoo pays you by ACH through " + ACH + " — nothing else. On a card-paid gig, Stripe's fee comes off your side." };
 }
@@ -1613,7 +1613,7 @@ async function checkout(env, site, q, origin) {
   if (!email || email.indexOf("@") < 1) return { ok:false, error:"the buyer's email" };
   const o = await env.OVERHANG.prepare("SELECT o.*, s.name seller_name, s.achpay FROM gp_offers o JOIN gp_sellers s ON s.id = o.seller_id WHERE o.id = ? AND o.state = 'live' AND s.state = 'verified'").bind(offerId).first();
   if (!o) return { ok:false, error:"no such offer" };
-  if (!o.achpay) return { ok:false, error: o.seller_name + " cannot be paid yet — no achpay.com address on file. Ask them to add it; then buy." };
+  if (!o.achpay) return { ok:false, error: o.seller_name + " cannot be paid yet — no achplug.com address on file. Ask them to add it; then buy." };
   const f = await fees(env), total = o.cents + f.buyer_cents;
   const body = form({
     "mode": "payment", "customer_email": email,
@@ -1940,7 +1940,7 @@ async function sale(env, site, q) {
   const seatsN = ticket ? (Number(ticket.seats) || 1) : Math.max(1, Math.round(num(q.get("seats")) || 1));
   const ref = clean(q.get("ref")) || null;
   /* the rail: stripe for a card-paid gig — Stripe's fee comes off the seller's side */
-  const rail = pick(q.get("rail"), ["stripe", "achpay.com", "cash", "other"]) || (eventId ? ACH : null);
+  const rail = pick(q.get("rail"), ["stripe", "achplug.com", "cash", "other"]) || (eventId ? ACH : null);
   const stripeFee = rail === "stripe" ? Math.round((amount + f.buyer_cents) * Number(f.stripe_bps || 0) / 10000) + Number(f.stripe_fixed_cents || 0) : 0;
   if (ref) { const had = await env.OVERHANG.prepare("SELECT id FROM gp_sales WHERE site = ? AND ref = ?").bind(site.key, ref).first();
     if (had) return { ok:true, build: BUILD, already:true, id: had.id, note:"That reference is already on the books." }; }
@@ -2003,7 +2003,7 @@ async function bill(env, which) {
   }
   return { ok:true, build: BUILD, half: h.half, period: h.from + " to " + h.to, ended, note: ended ? null : "That half has not ended — these are bills on the sales so far.", wrote, skipped };
 }
-/* Gigapoo paid the host (or the seller) for a sale — by ACH through achpay.com */
+/* Gigapoo paid the host (or the seller) for a sale — by ACH through achplug.com */
 async function payout(env, id, ref) {
   if (!id) return { ok:false, error:"which sale? (&sale=)" };
   const v = await env.OVERHANG.prepare("SELECT * FROM gp_sales WHERE id = ?").bind(id).first();
@@ -2011,7 +2011,7 @@ async function payout(env, id, ref) {
   if (v.state !== "paid" && v.state !== "released") return { ok:false, error:"that sale is " + v.state + " — Gigapoo has not received it yet, so it does not pay it out" };
   const s = await env.OVERHANG.prepare("SELECT id, name, achpay FROM gp_sellers WHERE id = ?").bind(v.seller_id).first();
   /* ⚠ PAID BY ACH THROUGH ACHPAY.COM ONLY — no achpay on file, no payout */
-  if (!s || !s.achpay) return { ok:false, error:(s ? s.name : "the seller") + " has no achpay.com address on file — Gigapoo pays only through " + ACH + ". They add it with ?action=bank&token=…&achpay=…", needs_achpay:true };
+  if (!s || !s.achpay) return { ok:false, error:(s ? s.name : "the seller") + " has no achplug.com address on file — Gigapoo pays only through " + ACH + ". They add it with ?action=bank&token=…&achpay=…", needs_achpay:true };
   await env.OVERHANG.prepare("UPDATE gp_sales SET host_paid=datetime('now'), host_ref=? WHERE id=?").bind(clean(ref) || null, id).run();
   return { ok:true, build: BUILD, sale: Number(id), seller: v.seller_id, to: s.achpay, paid_out: money(v.price_cents - v.seller_fee_cents - Number(v.stripe_fee_cents || 0)), stripe_fee_absorbed: Number(v.stripe_fee_cents || 0) ? money(v.stripe_fee_cents) : null, by: ACH, ref: clean(ref) || null };
 }
