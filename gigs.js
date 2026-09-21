@@ -1,4 +1,4 @@
-/* BUILT 2026-09-21 · gigapoo gigs.js 1i (1i: why a seller is good at this — detective, ex-con, wisdom, records, mystery reader, seen it all — asked at join and on the desk, shown on the card; 1h: Stripe wherever money moves — an approved ticket paid now by card, a bid taken by paying it; 1g: Buy by card on every offer through the pay desk — Stripe on everything; 1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
+/* BUILT 2026-09-21 · gigapoo gigs.js 1j (1j: the friendly page after a payment — ?paid= from Stripe shows what was bought, what happens next, the receipt and the seven-day promise at the top of the market; ?cancelled=1 says nothing was charged; 1i: why a seller is good at this — detective, ex-con, wisdom, records, mystery reader, seen it all — asked at join and on the desk, shown on the card; 1h: Stripe wherever money moves — an approved ticket paid now by card, a bid taken by paying it; 1g: Buy by card on every offer through the pay desk — Stripe on everything; 1f: data-scenario="1" makes the need door "Request a sleuth" — the scenario, what is known, what is wanted, always remote; 1e: every name links to the person's profile page — data-profile= sets the base)
    BUILT 2026-09-20 · gigapoo gigs.js 1d
    (1d: a fifth door, Events — paid events held by verified sellers, tickets
     reserved by named people with a telephone; a job option on "I need
@@ -73,6 +73,7 @@
     + '.gp .stars{font-size:12.5px;color:var(--gp-ink3)}'
     + '.gp .title{font:600 16px/1.35 var(--gp-sans);color:var(--gp-ink);margin:4px 0 2px}.gp .blurb{font-size:14px;color:var(--gp-ink2);margin:0 0 6px}'
     + '.gp .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--gp-ink3)}'
+    + '.gp .thanks{display:flex;gap:14px;align-items:flex-start;background:#eef8f2;border:1.5px solid #9cd3b3;border-radius:14px;padding:14px 16px;margin:0 0 14px;font:15.5px/1.5 var(--gp-sans);color:var(--gp-ink2)}.gp .thanks b{color:var(--gp-ink)}.gp .thanks .face{flex:0 0 40px;width:40px;height:40px;font-size:20px}.gp .thanks[hidden]{display:none}'
     + '.gp .why{grid-column:1/-1;margin:2px 0 0;font:15px/1.45 var(--gp-sans);color:var(--gp-ink2)}.gp .why b{color:var(--gp-ink)}'
     + '.gp .pill{border-radius:999px;padding:2px 9px;background:var(--gp-sky2);color:var(--gp-ink2);font-weight:600}.gp .pill.place{background:var(--gp-yellow2);color:#7a5a00}'
     + '.gp .price{font:700 18px var(--gp-sans);color:var(--gp-ink)}.gp .price small{font:400 12px var(--gp-sans);color:var(--gp-ink3)}'
@@ -144,7 +145,7 @@
   /* ---- the frame ---------------------------------------------------------- */
   var head = SI.purpose ? '<b>' + esc(SI.purpose) + (adult() ? ' · ' + SI.min_age + ' and older' : '') + '</b><span>' + esc(SI.blurb || "") + ' ' + esc(SI.rule || "Every seller here has a name, a telephone and a location on file, verified by a telephone call.") + ' Nobody is anonymous.</span>'
                         : '<b>Real people, real names.</b><span>Every seller here has a name, a telephone and a location on file, and was verified by a telephone call before the first listing. Buyers of in-place work are verified the same way. Nobody is anonymous.</span>';
-  root.innerHTML = ''
+  root.innerHTML = '<div class="thanks" id="gp-thanks" hidden></div>'
     + '<div class="trust"><div class="shield"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>'
     + '<div>' + head + '</div></div>'
     + '<div class="doors">'
@@ -709,6 +710,39 @@
       pane.querySelector("#gp-achpay").addEventListener("click", function (e) { e.preventDefault(); var a = prompt("Your achplug.com address — Gigapoo pays you there, and nowhere else:"); if (!a) return; get(API + "/?" + q({ action: "bank", token: tok, achpay: a })).then(function (r) { alert(r.ok ? r.note : (r.error || "did not save")); mine(tok); }); });
     }).catch(function () { pane.innerHTML = '<div class="warn">Could not reach the market.</div>'; });
   }
+
+  /* ---- the friendly page after a payment (1j) ----------------------------
+     Stripe sends the buyer back to the site with ?paid=<session> (or
+     ?cancelled=1). The page is the market itself, so the message goes at the
+     top of the embed: what was bought, what happens next, and the receipt. It
+     asks the desk; it grants nothing. */
+  (function () {
+    var qs = new URLSearchParams(location.search), sid = qs.get("paid"), box = root.querySelector("#gp-thanks");
+    if (!box) return;
+    var site = SI.name || "the market";
+    if (qs.get("cancelled")) { box.hidden = false; box.innerHTML = '<div class="face" style="background:var(--gp-sky2)">&#8617;</div><div><b>Nothing was charged.</b> The card page was closed before paying. Whatever you were after is still here.</div>'; return; }
+    if (!sid || !/^cs_(live|test)_/.test(sid)) return;
+    box.hidden = false; box.innerHTML = '<div class="face">&#10003;</div><div><b>Thank you.</b> Checking your payment&hellip;</div>';
+    root.scrollIntoView({ block: "start" });
+    var tries = 0;
+    var WHAT = {
+      gig:    "<b>Paid. Thank you.</b> The seller has been told and the money is <b>held</b> until the work is delivered; two days after that it is paid out. Watch the email you paid with &mdash; the work arrives there.",
+      ticket: "<b>Paid. Thank you &mdash; you are in.</b> The host has your name and picture; the place, the map and directions are on the event. Your telephone is on file so the host can reach you.",
+      store:  "<b>Paid. Thank you.</b> Your order is with the vendor and ships to the address you gave Stripe. The vendor marks it shipped and you are emailed.",
+      bill:   "<b>Paid. Thank you.</b> Your site&rsquo;s bill is settled and its market is on."
+    };
+    (function ask() {
+      get(PAY + "/?paid=" + encodeURIComponent(sid)).then(function (d) {
+        if (d && d.paid) {
+          var kinds = (d.skus || []).map(function (s) { return WHAT[s] || ("<b>Paid. Thank you.</b> " + esc(s)); });
+          box.innerHTML = '<div class="face" style="background:var(--gp-green,#2e9e6b);color:#fff">&#10003;</div><div>' + (kinds[0] || "<b>Paid. Thank you.</b>")
+            + (d.cents ? ' <span class="hint">$' + (d.cents / 100).toFixed(2) + ' &middot; a receipt from Stripe is on its way' + (d.email ? ' to ' + esc(d.email) : '') + '.</span>' : '')
+            + '<br><span class="hint">Seven-day money back on ' + esc(site) + ': ask within seven days and it is returned. <a href="' + PAY + '/refunds" target="_blank" rel="noopener">The policy</a>. Questions: 702-544-2002, a person answers.</span></div>';
+        } else if (tries++ < 8) setTimeout(ask, 1500);
+        else box.innerHTML = '<div class="face">&#8987;</div><div><b>The card page came back, but Stripe has not confirmed yet.</b> It usually does within a minute; if your card was charged, you are covered and the confirmation comes by email. Nothing more to do here.</div>';
+      }).catch(function () { if (tries++ < 8) setTimeout(ask, 1500); });
+    })();
+  })();
 
   var first = location.hash.slice(1);
   if (DOORS.indexOf(first) > -1 && first !== "offered") { pick(first); show(first); } else offered();
