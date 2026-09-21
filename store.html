@@ -31,7 +31,7 @@ h1{font:800 clamp(28px,4vw,40px)/1.1 var(--sans);letter-spacing:-.02em;margin:28
 .item{background:var(--sky);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
 .item .pic{aspect-ratio:1;background:var(--sky2);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .item .pic img{width:100%;height:100%;object-fit:cover}
-.item .pic svg{width:70%;height:70%}
+.item .pic svg{width:82%;height:82%}
 .item .b{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
 .item .by{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--orange2)}
 .item h3{font:700 18px var(--sans);margin:0}
@@ -61,7 +61,7 @@ footer{padding:26px 0 44px;font-size:13.5px;color:var(--ink3);border-top:1px sol
   var API = "https://api.gigapoo.com", PAY = "https://pay.warrantwire.com", ON = { wire: "wire", k8: "k8", wisesleuth: "ws" };
   var site = new URLSearchParams(location.search).get("site") || "";
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]; }); }
-  var TEE = '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M60 30 L85 20 Q100 34 115 20 L140 30 L170 55 L150 75 L140 68 L140 180 L60 180 L60 68 L50 75 L30 55 Z" fill="#12283d"/><circle cx="100" cy="95" r="18" fill="none" stroke="#f7c948" stroke-width="5"/><path d="M113 108 L128 123" stroke="#f7c948" stroke-width="6" stroke-linecap="round"/><text x="100" y="150" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="13" fill="#fff">WISE SLEUTH</text><text x="100" y="164" text-anchor="middle" font-family="Arial,sans-serif" font-size="8" fill="#f7c948" letter-spacing="1">PEOPLE WHO DIG</text></svg>';
+  var TEE = '<svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b3355"/><stop offset="1" stop-color="#12283d"/></linearGradient></defs><path d="M82 22 L104 12 Q120 26 136 12 L158 22 L200 42 L186 74 L166 66 L166 232 Q120 240 74 232 L74 66 L54 74 L40 42 Z" fill="url(#sh)"/><path d="M104 12 Q120 26 136 12 Q131 32 120 32 Q109 32 104 12 Z" fill="#0d1f31"/><path d="M82 22 L40 42 L54 74 L74 66" fill="none" stroke="#0d1f31" stroke-width="1.5"/><path d="M158 22 L200 42 L186 74 L166 66" fill="none" stroke="#0d1f31" stroke-width="1.5"/><circle cx="120" cy="96" r="13" fill="none" stroke="#f7c948" stroke-width="4.5"/><path d="M129.5 105.5 L141 117" stroke="#f7c948" stroke-width="5.5" stroke-linecap="round"/><text x="120" y="142" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="15" fill="#ffffff" textLength="84" lengthAdjust="spacingAndGlyphs">WISE SLEUTH</text><text x="120" y="156" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="6.5" fill="#f7c948" letter-spacing="1.6">PEOPLE WHO DIG</text></svg>';
   fetch(API + "/?products=1" + (site ? "&site=" + encodeURIComponent(site) : "")).then(function (r) { return r.json(); }).then(function (d) {
     var list = d.products || [], g = document.getElementById("grid");
     if (site && list.length) { document.getElementById("h1").textContent = list[0].sold_by + " — the store."; document.getElementById("lede").textContent = "Sold under " + list[0].sold_by + "'s name, paid by card, shipped by " + list[0].sold_by + "."; }
