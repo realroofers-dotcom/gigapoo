@@ -293,12 +293,38 @@
       : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 40"><path d="M16 1C8 1 2 7 2 15c0 10 14 24 14 24s14-14 14-24C30 7 24 1 16 1z" fill="#d9482b" stroke="#fff" stroke-width="2"/><rect x="9" y="9" width="14" height="12" rx="2" fill="#fff"/><rect x="9" y="9" width="14" height="4" fill="#f7c948"/><rect x="12" y="15" width="3" height="3" fill="#d9482b"/><rect x="17" y="15" width="3" height="3" fill="#d9482b"/></svg>';
     return window.L.icon({ iconUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), iconSize: [30, 38], iconAnchor: [15, 38], popupAnchor: [0, -34] });
   }
+  /* STOCKHOLDER MEETINGS AS EVENTS (events-meetings-1a, 15 Nov 2026). Mark: "gigapoo must list every meeting with directions
+     and a map" / "dude if i click events, then events should show up". Every in-person stockholder meeting in the next
+     60 days, from the same meetings worker 8k10q.com/meetings uses (one copy of the data, never a second). */
+  var MEET = "https://meetings.realroofers.workers.dev/?upcoming=1&days=60", meetP = null;
+  function meetings() {
+    if (!meetP) meetP = get(MEET).then(function (d) { return ((d && d.meetings) || []).filter(function (m) { return m.in_person; }); }).catch(function () { return []; });
+    return meetP;
+  }
+  var GRADE_C = { A: "#1f8a4c", B: "#2b7bb9", D: "#d9741a", F: "#c62828" };
+  function gradePill(g) { return '<span style="display:inline-block;min-width:22px;text-align:center;font-weight:800;color:#fff;background:' + (GRADE_C[g] || "#777") + ';border-radius:6px;padding:1px 6px">' + esc(g || "?") + '</span>'; }
+  function dirLink(m) { return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(m.matched_address || m.address || m.place || ""); }
+  function meetDay(m) { try { return new Date(m.date_iso + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }); } catch (e) { return m.date || m.date_iso; } }
+  function meetCard(m) {
+    return '<div class="card"><div style="display:flex;gap:10px;align-items:flex-start">'
+      + '<div style="flex:0 0 auto;text-align:center;background:#fff3c4;border:1px solid #f7c948;border-radius:10px;padding:6px 8px;min-width:62px"><b style="display:block;font-size:13px">' + esc(meetDay(m)) + '</b><small>' + esc(m.time || "") + '</small></div>'
+      + '<div style="flex:1 1 auto"><b>' + esc(m.company) + '</b> <span class="pill">' + esc(m.ticker || "") + '</span> ' + gradePill(m.grade)
+      + '<div class="meta"><span>' + (m.kind === "special" ? "Special meeting" : "Annual meeting") + ' · in person</span><span>' + esc(m.place || m.address || (m.country || "")) + '</span></div>'
+      + '<div class="hint" style="margin-top:2px">' + esc(m.grade_words || "") + '</div>'
+      + '<div class="meta" style="margin-top:4px"><a href="' + esc(dirLink(m)) + '" target="_blank" rel="noopener">Directions</a> · <a href="/meetings.html?s=' + encodeURIComponent(m.ticker || "") + '">What it takes to get in</a> · <a href="https://8k10q.com/army" target="_blank" rel="noopener">Go with the 8K10Q Army</a></div>'
+      + '</div></div></div>';
+  }
+  function meetIcon(g) {
+    var c = GRADE_C[g] || "#777";
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 40"><path d="M16 1C8 1 2 7 2 15c0 10 14 24 14 24s14-14 14-24C30 7 24 1 16 1z" fill="' + c + '" stroke="#fff" stroke-width="2"/><path d="M8 20 L13 14 L17 17 L24 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return window.L.icon({ iconUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), iconSize: [30, 38], iconAnchor: [15, 38], popupAnchor: [0, -34] });
+  }
   function drawMap(holder, what, onPick) {
     holder.innerHTML = '<div class="empty">Loading the map…</div>';
-    Promise.all([leaflet(), get(API + "/?pins=" + what + "&site=" + encodeURIComponent(SITE))]).then(function (r) {
-      var L = r[0], pins = (r[1] && r[1].pins) || [];
+    Promise.all([leaflet(), get(API + "/?pins=" + what + "&site=" + encodeURIComponent(SITE)), what === "events" ? meetings() : Promise.resolve([])]).then(function (r) {
+      var L = r[0], pins = (r[1] && r[1].pins) || [], mt = (r[2] || []).filter(function (m) { return m.lat && m.lon; });
       holder.innerHTML = '<div class="gpmap" style="height:360px;border-radius:12px;overflow:hidden;border:1px solid var(--gp-line)"></div>'
-        + '<p class="hint" style="margin-top:6px">' + (what === "sellers" ? "Gig workers nearby, to about a kilometre — never the exact point. " : "Events with a place. ") + pins.length + ' on the map. <a href="#" data-locate="1">Centre on me</a></p>';
+        + '<p class="hint" style="margin-top:6px">' + (what === "sellers" ? "Gig workers nearby, to about a kilometre — never the exact point. " + pins.length + ' on the map.' : "Events with a place: " + pins.length + " · stockholder meetings in person: " + mt.length + " (pin colour = grade).") + ' <a href="#" data-locate="1">Centre on me</a></p>';
       var map = L.map(holder.querySelector(".gpmap"), { scrollWheelZoom: false });
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "&copy; OpenStreetMap" }).addTo(map);
       var ic = icon(what === "sellers" ? "seller" : "event"), group = [];
@@ -308,6 +334,10 @@
           ? '<b>' + esc(p.name) + '</b>' + (p.credential ? ' · ' + esc(p.credential) : '') + '<br>' + esc(p.city) + ', ' + esc(p.country) + (p.nomad ? ' · on the move' : '') + '<br>' + (p.latest ? '<i>' + esc(p.latest) + '</i><br>' : '') + p.offers + ' offer' + (p.offers === 1 ? '' : 's') + ' · <a href="#" data-seller="' + p.id + '">see them</a>'
           : (p.picture ? '<img src="' + esc(p.picture) + '" style="width:100%;max-height:90px;object-fit:cover;border-radius:6px"><br>' : '') + '<b>' + esc(p.title) + '</b>' + (p.kind ? ' · ' + esc(p.kind) : '') + '<br>' + when(p.starts) + '<br>' + esc(p.venue || p.where) + '<br>' + esc(p.price) + ' a seat · ' + p.going + ' going' + (p.host ? ' · ' + esc(p.host) : '') + '<br><a href="#" data-event="' + p.id + '">see it — ask to come</a>';
         m.bindPopup(html);
+      });
+      mt.forEach(function (x) {
+        var m = L.marker([x.lat, x.lon], { icon: meetIcon(x.grade) }).addTo(map); group.push(m);
+        m.bindPopup('<b>' + esc(x.company) + '</b> · ' + esc(x.ticker || "") + ' ' + gradePill(x.grade) + '<br>Stockholder meeting · ' + esc(meetDay(x)) + (x.time ? ', ' + esc(x.time) : '') + '<br>' + esc(x.place || x.address || "") + '<br><a href="' + esc(dirLink(x)) + '" target="_blank" rel="noopener">Directions</a> · <a href="/meetings.html?s=' + encodeURIComponent(x.ticker || "") + '">to get in</a>');
       });
       map.on("popupopen", function (e) {
         var a = e.popup.getElement().querySelector("[data-event],[data-seller]");
@@ -370,7 +400,18 @@
         + (kinds.length ? '<div class="meta" style="margin-top:8px">' + kinds.map(function (k) { return '<a href="#" data-kind="' + esc(k.kind) + '" class="pill"' + (kind === k.kind ? ' style="background:var(--gp-orange);color:#fff"' : '') + '>' + esc(k.kind) + ' · ' + k.n + '</a>'; }).join("") + (kind ? ' <a href="#" data-kind="" class="hint">all types</a>' : '') + '</div>' : '')
         + '<div class="meta" style="margin-top:8px"><a href="#" id="gp-evmap" class="pill">Map of events</a><span id="gp-near" class="hint"></span></div></form><div id="gp-evmaph"></div>';
       pane.innerHTML = top + (list.length ? '<div class="list">' + list.map(function (ev) { return eventCard(ev, false); }).join("") + '</div>'
-        : '<div class="empty"><b>' + (search || kind ? 'Nothing matches.' : 'Nothing on yet.') + '</b><br>Any verified seller can hold an event — a meetup, a class, a walk, a dinner. <a href="#" data-go="sell">Sell here</a> to be verified, then hold one from your desk.</div>');
+        : (search || kind ? '<div class="empty"><b>Nothing matches.</b></div>' : ''))
+        + '<div id="gp-meets"><div class="empty">Loading the stockholder meetings…</div></div>'
+        + (list.length ? '' : '<p class="hint" style="padding:6px 12px">Any verified seller can hold an event here too — a meetup, a class, a walk, a dinner. <a href="#" data-go="sell">Sell here</a> to be verified, then hold one from your desk.</p>');
+      /* the stockholder meetings, in person, soonest first; the search box filters them too */
+      meetings().then(function (ms) {
+        var box = pane.querySelector("#gp-meets"); if (!box) return;
+        var s = (search || "").toLowerCase();
+        var show = (kind ? [] : ms).filter(function (m) { return !s || (m.company + " " + m.ticker + " " + (m.place || "") + " " + (m.address || "")).toLowerCase().indexOf(s) >= 0; });
+        box.innerHTML = '<h3 style="margin:14px 12px 4px;font-size:18px">Stockholder meetings, in person · next 60 days (' + show.length + ')</h3>'
+          + '<p class="hint" style="padding:0 12px 6px">Own one share by the record date and you can walk in. Grade: ' + gradePill("A") + ' in person + broadcast + questions · ' + gradePill("B") + ' in person + broadcast · ' + gradePill("D") + ' no broadcast · ' + gradePill("F") + ' no real access. <a href="/meetings.html">Calendar and the full list</a></p>'
+          + (show.length ? '<div class="list">' + show.map(meetCard).join("") + '</div>' : '<div class="empty">' + (kind ? 'Pick "all types" to see the stockholder meetings.' : 'No in-person stockholder meeting matches.') + '</div>');
+      });
       wireGo();
       pane.querySelector("#gp-evsearch").addEventListener("submit", function (e) { e.preventDefault(); eventsList(pane.querySelector("#gp-evq").value, kind); });
       pane.querySelector("#gp-evmap").addEventListener("click", function (e) { e.preventDefault(); var h = pane.querySelector("#gp-evmaph"); if (h.innerHTML) { h.innerHTML = ""; return; } drawMap(h, "events", function (id) { eventPage(id); }); });
