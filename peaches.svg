@@ -19,7 +19,7 @@
     <!-- a tuft on top -->
     <path d="M28 9 q2 -4 4 -1 q2 -3 4 1" fill="none" stroke-width="1.5"/>
     <!-- eyes, nose, mouth -->
-    <!-- eyes (Mark: "and eyes please"; 15 Nov peaches-2c: "make peaches eyes smaller") --><ellipse cx="27" cy="18.8" rx="2" ry="2.2" fill="#fff" stroke="#000" stroke-width="1.1"/><ellipse cx="37" cy="18.8" rx="2" ry="2.2" fill="#fff" stroke="#000" stroke-width="1.1"/><circle cx="27.3" cy="19.3" r="1.2" fill="#000" stroke="none"/><circle cx="36.7" cy="19.3" r="1.2" fill="#000" stroke="none"/><circle cx="27.7" cy="18.8" r=".4" fill="#fff" stroke="none"/><circle cx="37.1" cy="18.8" r=".4" fill="#fff" stroke="none"/>
+    <!-- eyes (Mark: "and eyes please"; 15 Nov peaches-2c/2d: "make peaches eyes smaller" / "smaller eyes" - small black eyes with a glint) --><circle cx="27.4" cy="19" r="1.3" fill="#000" stroke="none"/><circle cx="36.6" cy="19" r="1.3" fill="#000" stroke="none"/><circle cx="27.8" cy="18.6" r=".35" fill="#fff" stroke="none"/><circle cx="37" cy="18.6" r=".35" fill="#fff" stroke="none"/>
     <path d="M28.4 23.6 Q32 22.4 35.6 23.6 Q35.2 27 32 28.4 Q28.8 27 28.4 23.6 Z" fill="#000"/>
     <path d="M32 28 v2 M29.5 30.5 q2.5 2.2 5 0" fill="none" stroke-width="1.5"/>
     <!-- the tongue, hanging out (Mark 15 Nov: "make sure peaches has a nose and tongue hanging out") -->
